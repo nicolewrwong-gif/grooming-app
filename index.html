@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>✂️ Grooming</title>
+<style>
+:root{
+  --navy:#1C2B3A;
+  --navy-mid:#243447;
+  --navy-light:#2E4156;
+  --teal:#00A99D;
+  --teal-dark:#008B80;
+  --teal-bg:#E6F7F6;
+  --accent:#4DA6FF;
+  --accent-bg:#E8F3FF;
+  --text:#1a1a1a;
+  --text-muted:#6B7280;
+  --border:#E5E7EB;
+  --bg:#F3F4F6;
+  --white:#fff;
+  --green-bg:#EAF7EE;--green:#5BAF7A;
+  --amber-bg:#FFF3CD;--amber:#92620A;
+  --red-bg:#FDECEB;--red:#E8534A;
+  --blue-bg:#E8F3FF;--blue:#185FA5;
+  --purple-bg:#EEEDFE;--purple:#534AB7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+input,select,textarea,button{font-family:inherit;font-size:13px}
+select,input[type=text],input[type=date],input[type=time],input[type=number],textarea{
+  width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);
+  transition:border-color .15s;outline:none}
+select:focus,input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,169,157,0.12)}
+button{cursor:pointer;border:1px solid var(--border);border-radius:14px;background:#fff;color:var(--text);padding:9px 18px;font-weight:600;transition:all .15s;font-size:13px}
+button:hover{background:var(--bg);border-color:#ccc}
+button.primary{background:var(--teal);color:#fff;border-color:var(--teal);border-radius:14px;box-shadow:0 3px 8px rgba(0,169,157,0.28)}
+button.primary:hover{background:var(--teal-dark);border-color:var(--teal-dark)}
+button.green{background:#5BAF7A;color:#fff;border-color:#5BAF7A;border-radius:14px;box-shadow:0 3px 8px rgba(91,175,122,0.28)}
+button.green:hover{background:#4a9a69;border-color:#4a9a69}
+button.accent{background:#b0d8f9;color:#1a4a6e;border-color:#b0d8f9;border-radius:14px;box-shadow:0 3px 8px rgba(176,216,249,0.5)}
+button.accent:hover{background:#98ccf5;border-color:#98ccf5}
+button.sm{padding:5px 12px;font-size:11px;border-radius:10px;font-weight:500}
+button.danger{border-color:var(--red);color:var(--red);background:#fff;border-radius:14px}
+button.danger:hover{background:var(--red-bg)}
+label.lbl{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;letter-spacing:0.02em}
+/* ── HEADER STRIP ── */
+#app-header{background:#fff;color:var(--text);padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+#app-header .app-title{font-size:18px;font-weight:600;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;color:var(--text)}
+#app-header .app-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px}
+#app-header button.primary{background:var(--teal);border-color:var(--teal);color:#fff;font-size:13px;padding:9px 20px;border-radius:14px}
+#app-header button.primary:hover{background:var(--teal-dark);border-color:var(--teal-dark)}
+#app-header button.accent{font-size:13px;padding:9px 20px;border-radius:14px}
+#sync-status{font-size:12px;color:var(--text-muted)}
+/* ── STAT CARDS ── */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:1.25rem 1.5rem 0}
+.stat{background:#fff;border-radius:10px;padding:0.95rem 1.1rem;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.stat .slabel{font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+.stat .sval{font-size:22px;font-weight:600;color:var(--navy)}
+/* ── TABS ── */
+.tabs-wrap{padding:0 1.5rem;border-bottom:1px solid var(--border);background:#fff;box-shadow:0 1px 0 var(--border)}
+.tabs{display:flex;gap:0;flex-wrap:wrap}
+.tab-btn{padding:10px 16px;font-size:13px;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-1px;color:var(--text-muted);font-weight:500;border-radius:0;transition:color .15s}
+.tab-btn:hover{color:var(--navy);background:var(--bg)}
+.tab-btn.active{color:var(--teal);border-bottom:3px solid var(--teal);font-weight:600}
+/* ── MAIN CONTENT ── */
+.page-content{padding:1.25rem 1.5rem}
+/* ── CARDS ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.1rem;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;color:var(--text-muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;text-transform:uppercase;letter-spacing:0.04em;background:var(--bg)}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+/* ── BADGES / TAGS ── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;margin-right:3px;margin-bottom:3px}
+/* ── PRICE BOX ── */
+.price-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:10px;font-size:13px}
+.price-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.price-row.total{font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px;color:var(--navy)}
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:50;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.5rem;width:440px;max-width:95vw;margin-bottom:40px;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+.modal h2{font-size:15px;font-weight:600;margin-bottom:1rem;color:var(--navy)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.mb10{margin-bottom:10px}
+.row-end{display:flex;justify-content:flex-end;gap:8px;margin-top:1rem}
+/* ── CONFIRM ── */
+.confirm-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center}
+.confirm-bg.open{display:flex}
+.confirm-box{background:#fff;border-radius:14px;border:1px solid var(--border);padding:1.5rem;width:320px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+.confirm-box p{font-size:13px;margin-bottom:1rem;color:var(--navy);font-weight:500}
+/* ── MISC ── */
+.search-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;justify-content:space-between}
+.search-row .right{display:flex;gap:8px}
+.multi-toggle{display:flex;flex-wrap:wrap;gap:5px}
+.rule-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.rule-card-title{font-size:14px;font-weight:600;margin-bottom:0.5rem;color:var(--navy)}
+.rule-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;margin-right:5px;margin-bottom:5px}
+</style>
+</head>
+<body>
+<div id="app-header">
+  <div>
+    <div class="app-title">✂️ Grooming</div>
+    <div class="app-subtitle">Bookings &amp; client management</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span id="sync-status"></span>
+    <button id="sync-btn" onclick="manualSync()" style="font-size:11px;padding:4px 10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer">☁️ Sync</button><button onclick="loadFromSheets()" style="font-size:11px;padding:4px 10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer">⬇️ Load</button>
+    <button onclick="loadFromSheets()" style="font-size:11px;padding:4px 10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer">⬇️ Load</button>
+    <button class="accent" onclick="openBkModal(null)">+ New booking</button>
+  </div>
+</div>
+<div class="stats-bar">
+  <div class="stat"><div class="slabel">Today's bookings</div><div class="sval" id="m-today">0</div></div>
+  <div class="stat"><div class="slabel">This week</div><div class="sval" id="m-week">0</div></div>
+  <div class="stat"><div class="slabel">Total clients</div><div class="sval" id="m-clients">0</div></div>
+  <div class="stat"><div class="slabel">Pending confirm</div><div class="sval" id="m-pending">0</div></div>
+</div>
+<div class="tabs-wrap" style="margin-top:1.1rem">
+  <div class="tabs" id="tabs-row"></div>
+</div>
+<div class="page-content" id="page"></div>
+<div id="app" style="display:none"></div>
+
+<div id="modal-booking" class="modal-bg">
+<div class="modal" style="width:440px">
+<h2 id="bk-title">New booking</h2>
+<div class="mb10"><label class="lbl">Pet</label><select id="bk-pet"></select><div id="bk-pet-hint" style="font-size:11px;color:#888;margin-top:3px"></div></div>
+<div class="mb10"><label class="lbl">Owner</label><div id="bk-owner-display" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:#f6f6f6;color:#888;font-size:13px;min-height:34px">—</div><input type="hidden" id="bk-owner"/></div>
+<div class="mb10"><label class="lbl">Service</label><select id="bk-service"></select></div>
+<div class="mb10"><label class="lbl">Add-ons</label><div id="bk-addons" class="multi-toggle"></div></div>
+<div class="grid2">
+  <div><label class="lbl">Date</label><input type="date" id="bk-date"/></div>
+  <div><label class="lbl">Time</label><input type="time" id="bk-time"/></div>
+</div>
+<div class="mb10"><label class="lbl">Status</label><select id="bk-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></div>
+<div class="mb10"><label class="lbl">Notes</label><textarea id="bk-notes" rows="2" placeholder="e.g. sensitive skin"></textarea></div>
+<div class="mb10">
+  <label class="lbl">Products used</label>
+  <div id="bk-products" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:2px"></div>
+</div>
+<div class="grid2">
+  <div><label class="lbl">De-matting (min)</label><input type="number" id="bk-matting" value="0" min="0"/></div>
+  <div><label class="lbl">Custom price ($)</label><input type="number" id="bk-custom" placeholder="Auto"/></div>
+</div>
+<div id="bk-price-box" class="price-box"></div>
+<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-waived"> Waive payment</label></div>
+<div style="margin-bottom:10px"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-paid"> Mark as paid</label></div>
+<div class="mb10">
+  <label class="lbl">Before &amp; after photos</label>
+  <div style="display:flex;gap:10px">
+    <div style="flex:1">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500">Before</div>
+      <div id="bk-before-preview" onclick="document.getElementById('bk-before-input').click()" style="width:100%;aspect-ratio:4/5;border-radius:8px;border:1.5px dashed var(--border);background:#fafafa;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;font-size:11px;color:#aaa;text-align:center;flex-direction:column;gap:4px">
+        <span style="font-size:20px">📷</span>Upload
+      </div>
+      <input type="file" id="bk-before-input" accept="image/*" style="display:none" onchange="bkPhotoSelected(this,'before')"/>
+      <div style="display:none;margin-top:4px;gap:4px;flex-direction:column" id="bk-before-actions">
+        <button type="button" class="sm" onclick="bkCropPhoto('before')">✂️ Crop</button>
+        <button type="button" class="sm danger" onclick="bkRemovePhoto('before')">Remove</button>
+      </div>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500">After</div>
+      <div id="bk-after-preview" onclick="document.getElementById('bk-after-input').click()" style="width:100%;aspect-ratio:4/5;border-radius:8px;border:1.5px dashed var(--border);background:#fafafa;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;font-size:11px;color:#aaa;text-align:center;flex-direction:column;gap:4px">
+        <span style="font-size:20px">📷</span>Upload
+      </div>
+      <input type="file" id="bk-after-input" accept="image/*" style="display:none" onchange="bkPhotoSelected(this,'after')"/>
+      <div style="display:none;margin-top:4px;gap:4px;flex-direction:column" id="bk-after-actions">
+        <button type="button" class="sm" onclick="bkCropPhoto('after')">✂️ Crop</button>
+        <button type="button" class="sm danger" onclick="bkRemovePhoto('after')">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row-end"><button onclick="closeBkModal()">Cancel</button><button class="primary" onclick="saveBkModal()">Save booking</button></div>
+</div>
+</div>
+
+<div id="modal-pet" class="modal-bg">
+<div class="modal" style="width:500px">
+<h2 id="pt-title">New pet profile</h2>
+<div class="mb10" style="display:flex;align-items:center;gap:14px">
+  <div id="pt-photo-preview" onclick="document.getElementById('pt-photo-input').click()" style="width:72px;height:72px;border-radius:50%;border:0.5px solid #d0d0d0;background:#f6f6f6;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;font-size:28px">🐾</div>
+  <div>
+    <div style="font-size:12px;font-weight:500;margin-bottom:3px">Pet photo</div>
+    <div style="font-size:11px;color:#888;margin-bottom:6px">Click the circle to upload</div>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="sm" onclick="document.getElementById('pt-photo-input').click()">Upload photo</button>
+      <button type="button" class="sm danger" id="pt-photo-remove" style="display:none" onclick="ptRemovePhoto()">Remove</button>
+    </div>
+    <input type="file" id="pt-photo-input" accept="image/*" style="display:none" onchange="ptPhotoSelected(this)"/>
+  </div>
+</div>
+<div class="grid2">
+  <div><label class="lbl">Pet name</label><input type="text" id="pt-name" placeholder="Buddy"/></div>
+  <div><label class="lbl">Breed</label><input type="text" id="pt-breed" placeholder="Golden Retriever"/></div>
+</div>
+<div class="grid2">
+  <div><label class="lbl">Date of birth</label><input type="date" id="pt-dob"/></div>
+  <div><label class="lbl">Sex</label><select id="pt-sex"><option>Male</option><option>Female</option></select></div>
+  <div><label class="lbl">Desexed</label><select id="pt-desexed"><option value="yes">Yes</option><option value="no">No</option></select></div>
+  <div><label class="lbl">Size</label><select id="pt-size"><option>Mini</option><option>Small</option><option selected>Medium</option><option>Large</option><option>Extra large</option></select></div>
+</div>
+<div class="mb10"><label class="lbl">Coat type(s)</label><div id="pt-coats" class="multi-toggle"></div></div>
+<div class="mb10"><label class="lbl" style="color:#E8534A;font-weight:600">⚠️ Special handling</label><div id="pt-special" class="multi-toggle"></div><input type="text" id="pt-special-custom" placeholder="Custom note, e.g. only groomer Sarah" style="margin-top:6px"/></div>
+<div class="mb10"><label class="lbl">Behaviour traits</label><div id="pt-behaviour" class="multi-toggle"></div></div>
+<div class="mb10"><label class="lbl">Medical notes</label><textarea id="pt-mednotes" rows="2" placeholder="Handling requirements..."></textarea></div>
+<div class="mb10"><label class="lbl">Preferred style</label><input type="text" id="pt-prefstyle" placeholder="e.g. Teddy bear trim, summer cut..."/></div>
+<div class="mb10"><label class="lbl">Note for next visit</label><textarea id="pt-lastnote" rows="2" placeholder="e.g. check ear infection"></textarea></div>
+<div class="mb10"><label class="lbl">Medical conditions</label><div id="pt-medical" class="multi-toggle"></div></div>
+<div class="mb10"><label class="lbl">Linked owners</label><div id="pt-owners" class="multi-toggle"></div></div>
+<div class="row-end"><button onclick="closePtModal()">Cancel</button><button class="primary" onclick="savePtModal()">Save pet profile</button></div>
+</div>
+</div>
+
+<div id="modal-owner" class="modal-bg">
+<div class="modal" style="width:360px">
+<h2 id="ow-title">New owner</h2>
+<div class="mb10"><label class="lbl">Name</label><input type="text" id="ow-name" placeholder="Jane Smith"/></div>
+<div class="mb10"><label class="lbl">Phone</label><input type="text" id="ow-phone" placeholder="04xx xxx xxx"/></div>
+<div class="mb10"><label class="lbl">Email (optional)</label><input type="text" id="ow-email" placeholder="jane@email.com"/></div>
+<div class="mb10"><label class="lbl">Preferred contact</label><div id="ow-contact-toggle" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px"></div><input type="hidden" id="ow-contact" value=""/></div>
+<div class="mb10"><label class="lbl">Notes</label><textarea id="ow-notes" rows="2" placeholder="e.g. prefers morning appointments..."></textarea></div>
+<div class="row-end"><button onclick="closeOwModal()">Cancel</button><button class="primary" onclick="saveOwModal()">Save owner</button></div>
+</div>
+</div>
+
+<div id="modal-price" class="modal-bg">
+<div class="modal" style="width:340px">
+<h2 id="mp-title">Edit service</h2>
+<div class="mb10"><label class="lbl">Base price ($)</label><input type="number" id="mp-price"/></div>
+<div class="mb10"><label class="lbl">Base duration (min)</label><input type="number" id="mp-dur"/></div>
+<div class="row-end"><button onclick="closePriceModal()">Cancel</button><button class="primary" onclick="savePriceModal()">Save</button></div>
+</div>
+</div>
+
+<div id="confirm-modal" class="confirm-bg">
+<div class="confirm-box">
+<p id="confirm-msg"></p>
+<div style="display:flex;justify-content:flex-end;gap:8px">
+<button onclick="closeConfirm()">Cancel</button>
+<button id="confirm-ok" class="danger" onclick="confirmOk()">Delete</button>
+</div>
+</div>
+</div>
+
+<script>
+const SERVICES=["Full groom","Bath & brush","Nail trim","Puppy groom"];
+const ADD_ONS=["De-shedding treatment","Poodle point"];
+const PRODUCT_KEYWORDS=["shampoo","conditioner","treatment","spray","rinse"];
+const PRODUCT_EXCLUDE=["spray bottle","shampoo bottles x 4"];
+function getProductsFromExpenses(){
+  const found=[];
+  const seen=new Set();
+  expenses.forEach(e=>{
+    const desc=(e.desc||"").trim();
+    if(!desc)return;
+    const lower=desc.toLowerCase();
+    PRODUCT_KEYWORDS.forEach(kw=>{
+      if(lower.includes(kw)&&!seen.has(desc)&&!PRODUCT_EXCLUDE.some(ex=>lower===ex.toLowerCase())){seen.add(desc);found.push(desc);}
+    });
+  });
+  return found;
+}
+function toggleEmptyProduct(name){
+  if(emptyProducts.includes(name)){emptyProducts=emptyProducts.filter(x=>x!==name);}
+  else{emptyProducts=[...emptyProducts,name];}
+  lss("pg_emptyProducts2",emptyProducts);
+  renderBkProducts(bkActiveProducts);
+}
+const DEF_PRICES={"Full groom":95,"Bath & brush":65,"Nail trim":25,"Puppy groom":75,"De-shedding treatment":30,"Poodle point":20};
+const DEF_DUR={"Full groom":90,"Bath & brush":45,"Nail trim":15,"Puppy groom":60,"De-shedding treatment":30,"Poodle point":20};
+const DISC_PCT=10,MATTING_RATE=50,BEH_SURCHARGE=15,BEH_DUR_ADD=30;
+const BEH_SURCHARGE_TRAITS=["Requires muzzle","Bite risk"];
+const BEH_DUR_TRAITS=["Anxious","Senior / fragile","Separation anxiety","Fear of clippers","Resists handling","Sensitive feet","Requires muzzle","Eats air","Table active","Requires breaks"];
+const SIZE_MULT={"Mini":1,"Small":1,"Medium":1,"Large":1.2,"Extra large":1.4};
+const SIZE_DUR={"Mini":-10,"Small":0,"Medium":0,"Large":15,"Extra large":30};
+const BEHAVIOUR_TRAITS=["Food motivated","Friendly","Good with Bruce","Good with handling","Barks/howls","Eats air","Sensitive feet","Sitter","Table active","Anxious","Fear of clippers","Head shy","Noise sensitive","Senior / fragile","Separation anxiety","Bite risk","Escape risk","Flight risk","Resists handling","Requires breaks","Requires multiple sessions","Requires muzzle"];
+const MEDICAL_TAGS=["Arthritis","Blind","Vision impaired","Heart condition","Diabetes","Allergies","Hip dysplasia","Recent surgery","Ear infection","Cancer","Kidney disease","Thyroid condition","Hearing Impaired","Deaf","Seizure History"];
+
+const COAT_TYPES=["Curly Coat","Silky Coat","Wire Coat","Double Coat","Smooth Coat","Wavy Coat","Wool Coat","Medium Coat","Long Coat"];
+const SPECIAL_HANDLING_TRAITS=["Requires multiple sessions","Requires breaks","Requires muzzle"];
+const BADGE_STYLE={confirmed:{bg:"#EAF7EE",color:"#5BAF7A"},pending:{bg:"#FAEEDA",color:"#854F0B"},done:{bg:"#E6F1FB",color:"#185FA5"},cancelled:{bg:"#FDECEA",color:"#E8534A"}};
+
+const pad=n=>String(n).padStart(2,"0");
+const todayStr=()=>{const t=new Date();return`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;};
+const fmtDate=d=>{if(!d)return"—";const[y,m,day]=d.split("-");return`${day}/${m}/${y}`;};
+const fmtTime=t=>{if(!t)return"";const[h,mi]=t.split(":");const hr=parseInt(h,10);return`${hr%12||12}:${mi} ${hr<12?"AM":"PM"}`;};
+const fmtMoney=n=>"$"+Math.round(n*100)/100;
+const fmtPhone=v=>{const d=v.replace(/\D/g,"").slice(0,10);if(d.length<=4)return d;if(d.length<=7)return`${d.slice(0,4)} ${d.slice(4)}`;return`${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7,10)}`;};
+const fmtAge=dob=>{if(!dob)return"—";const b=new Date(dob),n=new Date();let y=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0){y--;m+=12;}return y<=0?`${m}mo`:`${y}y ${m}mo`;};
+const isBrachy=breed=>["Bulldog","English Bulldog","French Bulldog","Pug","Boston Terrier","Shih Tzu","Lhasa Apso","Pekingese","Cavalier King Charles Spaniel","Boxer","Chow Chow","Shar Pei","Maltese Shih Tzu","Puggle","Affenpinscher","Brussels Griffon"].some(b=>breed&&breed.toLowerCase().includes(b.toLowerCase()));
+const BEH_COLOR_GREEN=["Friendly","Food motivated","Good with Bruce","Good with handling"];
+const BEH_COLOR_BLUE=["Sensitive feet","Eats air","Table active","Sitter","Barks/howls"];
+const BEH_COLOR_ORANGE=["Anxious","Senior / fragile","Separation anxiety","Fear of clippers","Head shy","Noise sensitive"];
+const BEH_COLOR_RED=["Bite risk","Flight risk","Resists handling","Escape risk"];
+const behColor=t=>BEH_COLOR_GREEN.includes(t)?{bg:"#EAF7EE",text:"#5BAF7A",rank:0}:BEH_COLOR_BLUE.includes(t)?{bg:"#E8F3FF",text:"#185FA5",rank:1}:BEH_COLOR_ORANGE.includes(t)?{bg:"#FAEEDA",text:"#854F0B",rank:2}:BEH_COLOR_RED.includes(t)?{bg:"#FDECEA",text:"#E8534A",rank:3}:{bg:"#E8F3FF",text:"#185FA5",rank:4};
+const sortBehTraits=arr=>[...arr].sort((a,b)=>behColor(a).rank-behColor(b).rank||a.localeCompare(b));
+const medColor=t=>({bg:"#FDECEA",text:"#E8534A"});
+
+// ── GOOGLE SHEETS SYNC ─────────────────────────────────────────────────
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg8vy_t6w9f4xCxB7cJz7xM8U0iiCzDED0UV2j-Ypu7OeFno8ROwCp0qVTjAyjHWHy/exec"; // ← paste your deployed Apps Script URL here
+
+let _saveTimer=null;
+async function pushToSheets(){
+  try{
+    // Strip base64 photos before sending — too large for Sheets cells
+    const cleanBookings=bookings.map(b=>{const {beforePhoto,afterPhoto,...rest}=b;return rest;});
+    const cleanPets=pets.map(p=>{const {photo,photos,...rest}=p;return rest;});
+    const payload={action:"write",data:{Bookings:cleanBookings,Pets:cleanPets,Owners:owners,Expenses:expenses,Prices:prices,Durations:durations,Meta:{nextId,nextPetId,nextOId,nextExpId}}};
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)});
+    const text=await res.text();
+    let json={};
+    try{json=JSON.parse(text);}catch(e){
+      console.error("Sheet write response not JSON:",text);
+      setSyncStatus("error");
+      return false;
+    }
+    if(json.error){
+      console.error("Sheet write error:",json.error);
+      setSyncStatus("error");
+      return false;
+    }
+    if(json.ok){setSyncStatus("saved");return true;}
+    setSyncStatus("error");return false;
+  }catch(e){
+    console.error("pushToSheets fetch error:",e);
+    setSyncStatus("error");return false;
+  }
+}
+function save(){
+  // Store photos separately so main data stays small
+  const bookingPhotos={};bookings.forEach(b=>{if(b.beforePhoto||b.afterPhoto)bookingPhotos[b.id]={beforePhoto:b.beforePhoto||null,afterPhoto:b.afterPhoto||null};});
+  const petPhotos={};pets.forEach(p=>{if(p.photo)petPhotos[p.id]=p.photo;});
+  lss("pg_bkPhotos2",bookingPhotos);lss("pg_petPhotos2",petPhotos);
+  const cleanBookings=bookings.map(b=>{const {beforePhoto,afterPhoto,...rest}=b;return rest;});
+  const cleanPets=pets.map(p=>{const {photo,...rest}=p;return rest;});
+  lss("pg_bookings2",cleanBookings);lss("pg_pets2",cleanPets);lss("pg_owners2",owners);
+  lss("pg_expenses2",expenses);lss("pg_prices2",prices);lss("pg_dur2",durations);
+  lss("pg_nextId2",nextId);lss("pg_nextPetId2",nextPetId);lss("pg_nextOId2",nextOId);lss("pg_nextExpId2",nextExpId);
+  lss("pg_emptyProducts2",emptyProducts);
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(()=>{setSyncStatus("saving");pushToSheets();},700);
+}
+function setSyncStatus(s){
+  const el=document.getElementById("sync-status");if(!el)return;
+  if(s==="saving"){el.textContent="⏳ Saving...";el.style.color="#888";}
+  else if(s==="saved"){el.textContent="✓ Saved";el.style.color="#5BAF7A";setTimeout(()=>{el.textContent="";},2500);}
+  else if(s==="error"){el.textContent="⚠️ Sync error — check URL";el.style.color="#E8534A";}
+  else{el.textContent=s;el.style.color="#888";}
+}
+async function manualSync(){
+  const btn=document.getElementById("sync-btn");
+  if(btn){btn.disabled=true;btn.textContent="⏳ Syncing...";}
+  setSyncStatus("saving");
+  await pushToSheets();
+  if(btn){btn.disabled=false;btn.textContent="☁️ Sync";}
+}
+async function loadFromSheets(){
+  if(SCRIPT_URL==="YOUR_APPS_SCRIPT_URL_HERE"){setSyncStatus("⚠️ Paste your Apps Script URL to enable sync");return false;}
+  setSyncStatus("⏳ Loading...");
+  try{
+    const res=await fetch(SCRIPT_URL+"?action=read");
+    const text=await res.text();
+    let json;
+    try{json=JSON.parse(text);}catch(e){
+      setSyncStatus("⚠️ Load failed");
+      console.error("Sheet response not JSON:",text);
+      alert("Could not load from Sheets — unexpected response:\n"+text.slice(0,200));
+      return false;
+    }
+    if(json.ok&&json.data){
+      const d=json.data;
+      if(d.Bookings)bookings=d.Bookings;
+      if(d.Pets)pets=d.Pets;
+      if(d.Owners)owners=d.Owners;
+      if(d.Expenses)expenses=d.Expenses;
+      if(d.Prices)prices=d.Prices;
+      if(d.Durations)durations=d.Durations;
+      if(d.Meta){nextId=d.Meta.nextId||nextId;nextPetId=d.Meta.nextPetId||nextPetId;nextOId=d.Meta.nextOId||nextOId;nextExpId=d.Meta.nextExpId||nextExpId;}
+      reattachPhotos();
+      setSyncStatus("✓ Loaded");setTimeout(()=>setSyncStatus(""),2000);
+      render();return true;
+    }else{
+      setSyncStatus("⚠️ Load failed");
+      alert("Sheets responded but returned no data. Response:\n"+JSON.stringify(json).slice(0,200));
+    }
+  }catch(e){
+    setSyncStatus("⚠️ Could not load");
+    alert("Load error: "+e.message);
+  }
+  return false;
+}
+// ───────────────────────────────────────────────────────────────────────
+
+function lss(key,val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); }
+  catch(e){ console.error("Failed to save", key, e); }
+}
+function lsg(key,fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw===null ? fallback : JSON.parse(raw);
+  }catch(e){
+    console.error("Failed to load", key, e);
+    return fallback;
+  }
+}
+
+// Reattach photos after loading
+function reattachPhotos(){
+  const bkPhotos=lsg("pg_bkPhotos2",{});
+  bookings=bookings.map(b=>{const ph=bkPhotos[b.id]||{};return{...b,beforePhoto:ph.beforePhoto||null,afterPhoto:ph.afterPhoto||null};});
+  const petPhotos=lsg("pg_petPhotos2",{});
+  pets=pets.map(p=>({...p,photo:petPhotos[p.id]||null}));
+}
+let bookings=lsg("pg_bookings2",[
+  {id:1,ownerId:1,petId:1,service:"Full groom",addOns:[],date:"2026-06-12",time:"09:00",status:"confirmed",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
+  {id:2,ownerId:2,petId:2,service:"Bath & brush",addOns:[],date:"2026-06-12",time:"11:00",status:"confirmed",notes:"Sensitive skin",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
+  {id:3,ownerId:3,petId:3,service:"Full groom",addOns:["De-shedding treatment"],date:"2026-06-12",time:"14:00",status:"pending",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
+  {id:4,ownerId:4,petId:4,service:"Full groom",addOns:[],date:"2026-06-15",time:"10:00",status:"confirmed",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
+  {id:5,ownerId:5,petId:5,service:"Full groom",addOns:["Poodle point"],date:"2026-06-18",time:"09:30",status:"confirmed",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
+]);
+let pets=lsg("pg_pets2",[
+  {id:1,name:"Max",breed:"Labrador",dob:"2021-03-15",sex:"Male",desexed:true,size:"Large",coatTypes:["Smooth Coat"],behaviour:["Friendly","Good with handling"],medicalTags:[],medicalNotes:"No known allergies.",ownerIds:[1,6],lastNote:""},
+  {id:2,name:"Bella",breed:"Poodle",dob:"2022-07-02",sex:"Female",desexed:true,size:"Medium",coatTypes:["Curly Coat"],behaviour:["Anxious","Noise sensitive"],medicalTags:[],medicalNotes:"Sensitive skin — hypoallergenic shampoo only.",ownerIds:[2],lastNote:"Went well with low-noise dryer."},
+  {id:3,name:"Coco",breed:"Shih Tzu",dob:"2020-11-20",sex:"Female",desexed:false,size:"Small",coatTypes:["Silky Coat","Double Coat"],behaviour:[],medicalTags:[],medicalNotes:"Keep away from other dogs in waiting area.",ownerIds:[3],lastNote:""},
+  {id:4,name:"Charlie",breed:"Border Collie",dob:"2019-05-10",sex:"Male",desexed:true,size:"Medium",coatTypes:["Double Coat"],behaviour:["Friendly"],medicalTags:[],medicalNotes:"",ownerIds:[4],lastNote:""},
+  {id:5,name:"Luna",breed:"Maltese",dob:"2023-01-08",sex:"Female",desexed:false,size:"Mini",coatTypes:["Silky Coat"],behaviour:["Fear of clippers","Anxious"],medicalTags:[],medicalNotes:"Mild anxiety around clippers.",ownerIds:[5],lastNote:""},
+]);
+let owners=lsg("pg_owners2",[
+  {id:1,name:"Sarah Mitchell",phone:"0412 345 678",email:"sarah.m@email.com"},
+  {id:2,name:"Tom Nguyen",phone:"0421 987 654",email:"tom.n@email.com"},
+  {id:3,name:"Claire Watson",phone:"0435 111 222",email:""},
+  {id:4,name:"James Park",phone:"0401 222 333",email:""},
+  {id:5,name:"Emma Brown",phone:"0455 444 555",email:"emma.b@email.com"},
+  {id:6,name:"David Mitchell",phone:"0412 999 888",email:""},
+]);
+let expenses=lsg("pg_expenses2",[
+  {id:1,desc:"Shampoo & conditioner stock",amount:85,date:"2026-06-10"},
+  {id:2,desc:"Grooming scissors set",amount:120,date:"2026-06-05"},
+]);
+let prices=lsg("pg_prices2",{...DEF_PRICES});reattachPhotos();
+let durations=lsg("pg_dur2",{...DEF_DUR});
+let nextId=lsg("pg_nextId2",6);
+let nextPetId=lsg("pg_nextPetId2",6);
+let nextOId=lsg("pg_nextOId2",7);
+let nextExpId=lsg("pg_nextExpId2",3);
+let emptyProducts=lsg("pg_emptyProducts2",[]);
+
+function petById(id){return pets.find(p=>p.id===id);}
+function ownerById(id){return owners.find(o=>o.id===id);}
+
+function computeCost(service,addOns,pet){
+  const base=prices[service]||0,baseDur=durations[service]||0;
+  const addOnCost=(addOns||[]).reduce((s,a)=>s+(prices[a]||0),0);
+  const addOnDur=(addOns||[]).reduce((s,a)=>s+(durations[a]||0),0);
+  if(!pet)return{base,addOnCost,sizeAdj:0,behAdj:0,behDurAdj:0,total:base+addOnCost,duration:baseDur+addOnDur};
+  const sizeAdj=Math.round(base*(SIZE_MULT[pet.size]||1))-base;
+  const behAdj=(pet.behaviour||[]).some(t=>BEH_SURCHARGE_TRAITS.includes(t))?BEH_SURCHARGE:0;
+  const behDurAdj=(pet.behaviour||[]).some(t=>BEH_DUR_TRAITS.includes(t))?BEH_DUR_ADD:0;
+  return{base,addOnCost,sizeAdj,behAdj,behDurAdj,total:base+sizeAdj+behAdj+addOnCost,duration:Math.max(baseDur+(SIZE_DUR[pet.size]||0)+behDurAdj+addOnDur,15)};
+}
+function mattingCost(mins){return(Number(mins)||0)/60*MATTING_RATE;}
+function bkPrice(b){
+  const pet=petById(b.petId);
+  const cost=computeCost(b.service,b.addOns||[],pet);
+  const matting=mattingCost(b.mattingMinutes);
+  const duration=cost.duration+(Number(b.mattingMinutes)||0);
+  const hasCustom=b.customPrice!==null&&b.customPrice!==undefined&&b.customPrice!=="";
+  const subtotal=hasCustom?Number(b.customPrice):cost.total+matting;
+  if(b.waived)return{...cost,matting,duration,disc:0,subtotal,finalTotal:0,waived:true,isCustom:hasCustom};
+  const disc=b.discount?subtotal*DISC_PCT/100:0;
+  return{...cost,matting,duration,disc,subtotal,finalTotal:subtotal-disc,waived:false,isCustom:hasCustom};
+}
+
+let currentTab="dashboard";
+let confirmCb=null;
+
+function badge(status){const s=BADGE_STYLE[status]||BADGE_STYLE.pending;return`<span class="badge" style="background:${s.bg};color:${s.color}">${status.charAt(0).toUpperCase()+status.slice(1)}</span>`;}
+function tag(text,bg,color){return`<span class="tag" style="background:${bg};color:${color}">${text}</span>`;}
+function avatar(name,size=32){const i=name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:#EEEDFE;color:#534AB7;display:inline-flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.38)}px;font-weight:500;flex-shrink:0">${i}</div>`;}
+function specialHandlingTags(pet){if(!pet)return[];return[...(pet.medicalTags||[]),...(pet.behaviour||[])].filter(t=>SPECIAL_HANDLING_TRAITS.includes(t));}
+function specialHandlingBox(pet,marginBottom=4,marginTop=0){const tags=specialHandlingTags(pet);const custom=pet?.customSpecialHandling||"";if(!tags.length&&!custom)return"";return`<div style="background:#fff;border:1px solid #E8534A;border-radius:6px;padding:6px 9px;margin-bottom:${marginBottom}px;margin-top:${marginTop}px"><div style="font-weight:600;color:#E8534A;font-size:11px;margin-bottom:3px">⚠️ Special handling required</div>${tags.map(t=>tag(t,"#FDECEA","#E8534A")).join("")}${custom?`<div style="font-size:11px;color:#E8534A;margin-top:4px">${custom}</div>`:""}</div>`;}
+
+function openConfirm(msg,label,cb){
+  document.getElementById("confirm-msg").textContent=msg;
+  document.getElementById("confirm-ok").textContent=label||"Delete";
+  document.getElementById("confirm-modal").classList.add("open");
+  confirmCb=cb;
+}
+function closeConfirm(){document.getElementById("confirm-modal").classList.remove("open");confirmCb=null;}
+function confirmOk(){if(confirmCb)confirmCb();closeConfirm();}
+document.addEventListener("click",function(e){
+  if(e.target && e.target.id==="confirm-ok"){
+    if(confirmCb)confirmCb();
+    closeConfirm();
+  }
+});
+
+function render(){renderMetrics();renderPage();}
+
+function renderMetrics(){
+  const td=todayStr();const now=new Date();const sw=new Date();sw.setDate(now.getDate()-now.getDay());const ew2=new Date(sw);ew2.setDate(sw.getDate()+6);
+  const m={today:bookings.filter(b=>b.date===td).length,week:bookings.filter(b=>{const d=new Date(b.date);return d>=sw&&d<=ew2;}).length,clients:owners.length,pending:bookings.filter(b=>b.status==="pending").length};
+  const et=document.getElementById("m-today");const eww=document.getElementById("m-week");const ec=document.getElementById("m-clients");const ep=document.getElementById("m-pending");
+  if(et)et.textContent=m.today;if(eww)eww.textContent=m.week;if(ec)ec.textContent=m.clients;if(ep)ep.textContent=m.pending;
+}
+
+function renderPage(){
+  const page=document.getElementById("page");
+  if(currentTab==="dashboard")page.innerHTML=renderDashboard();
+  else if(currentTab==="bookings")page.innerHTML=renderBookings();
+  else if(currentTab==="calendar")page.innerHTML=renderCalendar();
+  else if(currentTab==="pets")page.innerHTML=renderPets();
+  else if(currentTab==="clients")page.innerHTML=renderClients();
+  else if(currentTab==="pricing")page.innerHTML=renderPricing();
+  else if(currentTab==="finances")page.innerHTML=renderFinances();
+}
+
+function renderDashboard(){
+  const td=todayStr();const now=new Date();const nowTime=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const upcoming=bookings.filter(b=>b.status!=="cancelled"&&(b.date>td||(b.date===td&&b.time>=nowTime))).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const next=upcoming[0];
+  let nextHtml="";
+  if(!next){
+    nextHtml=`<div class="card" style="text-align:center;color:#888">No upcoming appointments.</div>`;
+  } else {
+    const pet=petById(next.petId),owner=ownerById(next.ownerId);
+    const brachy=pet&&isBrachy(pet.breed)?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:8px">Brachy</span>`:"";
+    const behTags=(pet?.behaviour||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)).map(t=>{const c=behColor(t);return tag(t,c.bg,c.text);}).join("");
+    const petPhoto=pet?.photo?`<img src="${pet.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="font-size:24px">🐾</div>`;
+    nextHtml=`<div class="card"><div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${petPhoto}<div style="flex:1"><div style="font-size:14px;font-weight:500">${pet?.name||"?"} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${pet?.breed||""}</span>${brachy}</div><div style="font-size:12px;color:#888">${owner?.name||"?"} &middot; ${owner?.phone||""}</div></div>${badge(next.status)}</div><div style="font-size:13px;margin-bottom:8px"><strong>${next.service}</strong>${(next.addOns||[]).length?" + "+next.addOns.join(", "):""} — ${fmtDate(next.date)} at ${fmtTime(next.time)}</div>${specialHandlingBox(pet,8)}${next.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:12px;color:#534AB7;margin-bottom:8px;white-space:pre-wrap">${next.notes}</div>`:""}<br>${behTags?`<div style="margin-bottom:10px">${behTags}</div>`:""}${(()=>{const lastBk=bookings.filter(b=>b.petId===next.petId&&b.id!==next.id&&b.status==="done"&&(b.products||[]).length).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))[0];return lastBk?`<div style="background:#EEF6FF;border-radius:6px;padding:6px 10px;font-size:11px;margin-bottom:8px"><span style="color:#185FA5;font-weight:600">Products last visit</span><br>${(lastBk.products||[]).map(p=>`<span style="display:inline-block;background:#D4EBFF;color:#185FA5;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;margin-right:3px">${p}</span>`).join("")}</div>`:"";})()}</div><div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;justify-content:flex-start"><button class="primary" onclick="markBkStatus(${next.id},'done')" style="padding:9px 18px;font-size:13px;background:#95ddbc;border-color:#95ddbc;color:#1a4a2e;box-shadow:0 3px 8px rgba(149,221,188,0.4)">Done</button><button class="primary" onclick="markBkStatus(${next.id},'cancelled')" style="padding:9px 18px;font-size:13px;background:#E8534A;border-color:#E8534A;box-shadow:0 3px 8px rgba(232,83,74,0.28)">Cancelled</button></div></div></div>`;
+  }
+  let upcomingMore="";
+  if(upcoming.length>1){
+    upcomingMore=`<div style="font-size:12px;font-weight:500;color:#888;margin-bottom:6px">Then coming up</div>`;
+    upcoming.slice(1,4).forEach(b=>{const pet=petById(b.petId),owner=ownerById(b.ownerId);upcomingMore+=`<div style="display:flex;justify-content:space-between;font-size:12px;background:#f6f6f6;border-radius:8px;padding:6px 10px;margin-bottom:4px"><span>${pet?.name||"?"} (${owner?.name||"?"}) — ${b.service}</span><span style="color:#888">${fmtDate(b.date)} ${fmtTime(b.time)}</span></div>`;});
+  }
+  return`<div style="font-size:14px;font-weight:500;margin-bottom:10px">Next appointment</div>${nextHtml}<div style="margin-top:14px">${upcomingMore}</div>`;
+}
+
+function renderBookings(){
+  const cards=[...bookings].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).map(b=>{
+    const owner=ownerById(b.ownerId),pet=petById(b.petId),p=bkPrice(b);
+    const priceHtml=b.waived?`<em style="color:#534AB7">Waived</em>`:b.discount&&p.disc>0?`<span style="text-decoration:line-through;color:#aaa;font-size:11px;margin-right:4px">${fmtMoney(p.subtotal)}</span><strong>${fmtMoney(p.finalTotal)}</strong>`:`<strong>${fmtMoney(p.finalTotal)}</strong>`;
+    const payHtml=b.waived?tag("Waived","#EEEDFE","#534AB7"):b.paid?tag("Paid ✓","#EAF7EE","#5BAF7A"):`${tag("Outstanding","#FDECEA","#E8534A")}<div style="margin-top:4px;display:flex;gap:4px"><button class="sm" onclick="togglePaid(${b.id})">Mark paid</button><button class="sm" onclick="waiveBk(${b.id})">Waive</button></div>`;
+    return`<div class="card bk-card" data-id="${b.id}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        ${avatar(owner?.name||"?",36)}
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:500;font-size:13px">${owner?.name||"—"} <span style="color:#888;font-weight:400">&middot; ${owner?.phone||""}</span></div>
+              <div style="font-size:12px;color:#888;margin-top:1px"><strong style="color:var(--text)">${pet?.name||"—"}</strong> &middot; ${pet?.breed||""}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${badge(b.status)}<button class="sm" onclick="editBk(${b.id})">&#9998;</button><button class="sm" onclick="deleteBk(${b.id})">&#128465;</button></div>
+          </div>
+          <div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
+            <div style="min-width:120px">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Service</div>
+              <div style="font-size:13px">${b.service}</div>
+              ${(b.addOns||[]).length?`<div style="font-size:10px;color:#534AB7">+${b.addOns.join(", ")}</div>`:""}
+            </div>
+            <div style="min-width:90px">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Date & time</div>
+              <div style="font-size:13px">${fmtDate(b.date)}</div>
+              <div style="font-size:11px;color:#888">${fmtTime(b.time)}</div>
+            </div>
+            <div style="min-width:70px">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Price</div>
+              <div style="font-size:13px">${priceHtml}</div>
+            </div>
+            <div style="min-width:110px">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Payment</div>
+              <div style="font-size:13px">${payHtml}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${b.notes||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap">${b.notes}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="flex:1"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="flex:1"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
+    </div>`;
+  }).join("");
+  return`<div class="search-row"><span style="font-size:14px;font-weight:500">All bookings</span><div class="right"><input type="text" id="bk-search" placeholder="Search..." style="width:140px" oninput="filterBookings()"/><select id="bk-status-filter" onchange="filterBookings()" style="width:auto"><option value="">All statuses</option><option>confirmed</option><option>pending</option><option>done</option><option>cancelled</option></select></div></div><div id="bk-cards">${cards||`<p style="text-align:center;color:#888;padding:2rem">No bookings yet.</p>`}</div>`;
+}
+
+function filterBookings(){
+  const q=(document.getElementById("bk-search")?.value||"").toLowerCase();
+  const st=document.getElementById("bk-status-filter")?.value||"";
+  document.querySelectorAll(".bk-card").forEach(card=>{
+    const id=Number(card.dataset.id);
+    const b=bookings.find(x=>x.id===id);if(!b)return;
+    const owner=ownerById(b.ownerId),pet=petById(b.petId);
+    const match=(!q||(owner&&owner.name.toLowerCase().includes(q))||(pet&&pet.name.toLowerCase().includes(q)))&&(!st||b.status===st);
+    card.style.display=match?"":"none";
+  });
+}
+
+function renderCalendar(){
+  const now=new Date();const y=now.getFullYear(),m=now.getMonth();
+  const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const firstDay=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate();
+  const td=todayStr();let cells="";
+  for(let i=0;i<firstDay;i++)cells+=`<div style="border-radius:8px;padding:5px 4px;min-height:52px;border:0.5px solid #eee;opacity:0.3"><div style="font-size:11px;color:#888">${new Date(y,m,-firstDay+i+1).getDate()}</div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${y}-${pad(m+1)}-${pad(d)}`;
+    const bks=bookings.filter(b=>b.date===dateStr);
+    const isT=dateStr===td;
+    let bkHtml=bks.slice(0,2).map(b=>`<div style="background:#EEEDFE;color:#534AB7;border-radius:3px;padding:1px 4px;font-size:10px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${fmtTime(b.time)} ${petById(b.petId)?.name||"?"}</div>`).join("");
+    if(bks.length>2)bkHtml+=`<div style="font-size:10px;color:#888">+${bks.length-2}</div>`;
+    cells+=`<div style="border-radius:8px;padding:5px 4px;min-height:52px;border:${isT?"1.5px solid #1a1a1a":"0.5px solid #eee"}"><div style="font-size:11px;color:#888;font-weight:${isT?500:400};margin-bottom:2px">${d}</div>${bkHtml}</div>`;
+  }
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:14px;font-weight:500">${MONTHS[m]} ${y}</span></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div style="text-align:center;font-size:11px;color:#888;padding:4px 0">${d}</div>`).join("")}${cells}</div>`;
+}
+
+function renderPets(){
+  const rows=[...pets].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>{
+    const linkedOwners=owners.filter(o=>p.ownerIds.includes(o.id));
+    const last=bookings.filter(b=>b.petId===p.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const brachy=isBrachy(p.breed)?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:6px">Brachy</span>`:"";
+    const behTags=sortBehTraits((p.behaviour||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)&&BEHAVIOUR_TRAITS.includes(t))).map(t=>{const c=behColor(t);return tag(t,c.bg,c.text);}).join("");
+    const medTags=(p.medicalTags||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)&&MEDICAL_TAGS.includes(t)).map(t=>{const c=medColor(t);return tag(t,c.bg,c.text);}).join("");
+    const coatTags=(p.coatTypes||[]).filter(t=>COAT_TYPES.includes(t)).map(t=>tag(t,"#F0F0F0","#444")).join("");
+    const photoEl=p.photo?`<img src="${p.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:44px;height:44px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🐾</div>`;
+    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${photoEl}<div style="flex:1"><div style="font-size:14px;font-weight:500">${p.name} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${p.breed}</span>${brachy}</div>${specialHandlingBox(p,4,4)}<div style="font-size:12px;color:#888;margin-top:2px">${p.sex} &middot; ${p.desexed?"Desexed":"Not desexed"} &middot; ${p.size} &middot; Age ${fmtAge(p.dob)}</div>${coatTags?`<div style="margin-top:4px">${coatTags}</div>`:""}<div style="margin-top:4px">${behTags}</div>${(medTags||p.medicalNotes)?`<div style="background:#FDECEB;border-radius:6px;padding:5px 8px;font-size:11px;color:#E8534A;margin-top:6px"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px${p.medicalNotes?";margin-bottom:4px":""}"><strong>Medical notes:</strong>${medTags}</div>${p.medicalNotes?`<div style="white-space:pre-wrap">${p.medicalNotes}</div>`:""}</div>`:""}${p.preferredStyle?`<div style="font-size:11px;color:#888;margin-top:4px"><strong>Preferred style:</strong> ${p.preferredStyle}</div>`:""}${p.lastNote?`<div style="background:#FAEEDA;border-radius:6px;padding:5px 8px;font-size:11px;color:#854F0B;margin-top:6px;white-space:pre-wrap">${p.lastNote}</div>`:""}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="sm" onclick="editPet(${p.id})">&#9998;</button><button class="sm" onclick="deletePet(${p.id})">&#128465;</button></div></div><div style="margin-top:6px;padding-left:54px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><span style="font-size:11px;color:#888">Last: ${last?`${fmtDate(last.date)} &middot; ${last.service}`:"—"}</span><span style="font-size:11px;color:#888">Owners: ${linkedOwners.map(o=>o.name).join(", ")||"—"}</span></div></div>`;
+  }).join("");
+  return`<div class="search-row"><span style="font-size:14px;font-weight:500">Pet profiles</span><div class="right"><button class="accent" onclick="openPtModal(null)">+ New pet</button></div></div>${rows||`<p style="text-align:center;color:#888;padding:2rem">No pets yet.</p>`}`;
+}
+
+function renderClients(){
+  const rows=[...owners].sort((a,b)=>a.name.localeCompare(b.name)).map(o=>{
+    const op=pets.filter(p=>p.ownerIds.includes(o.id));
+    const bks=bookings.filter(b=>b.ownerId===o.id&&b.status!=="cancelled");
+    const spent=bks.filter(b=>!b.waived).reduce((s,b)=>s+bkPrice(b).finalTotal,0);
+    const last=bks.reduce((acc,b)=>(!acc||b.date>acc)?b.date:acc,"");
+    const petTags=op.map(p=>tag("🐾 "+p.name,"#EEEDFE","#534AB7")).join("");
+    const contactIcon=o.contact==="WhatsApp"?OW_CONTACT_ICONS.WhatsApp:o.contact==="SMS"?OW_CONTACT_ICONS.SMS:o.contact==="Facebook"?"📘":o.contact==="Email"?"✉️":o.contact==="Phone"?"📞":"";
+    const contactBadge=o.contact?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#EEEBFA;color:#534AB7;border-radius:20px;padding:3px 10px;margin-left:7px;vertical-align:middle;font-weight:500">${OW_CONTACT_ICONS[o.contact]||""} ${o.contact}</span>`:"";
+    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${avatar(o.name,36)}<div style="flex:1"><div style="font-size:14px;font-weight:500">${o.name}</div><div style="font-size:12px;color:#888;margin-top:2px">${o.phone}${contactBadge}${o.email?" &middot; "+o.email:""}</div>${o.notes?`<div style="font-size:12px;color:#854F0B;background:#FAEEDA;border-radius:6px;padding:4px 8px;margin-top:5px">${o.notes}</div>`:""}<div style="margin-top:6px">${petTags||`<span style="font-size:12px;color:#888">No pets linked</span>`}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:12px;color:#888">${bks.length} visit${bks.length!==1?"s":""} &middot; ${fmtMoney(spent)}</div><div style="font-size:12px;color:#888">Last: ${last?fmtDate(last):"—"}</div><div style="display:flex;gap:4px;justify-content:flex-end;margin-top:6px"><button class="sm" onclick="editOwner(${o.id})">&#9998; Edit</button><button class="sm" onclick="deleteOwner(${o.id})">&#128465;</button></div></div></div></div>`;
+  }).join("");
+  return`<div class="search-row"><span style="font-size:14px;font-weight:500">Client directory</span><div class="right"><button class="accent" onclick="openOwModal(null)">+ New owner</button></div></div>${rows||`<p style="text-align:center;color:#888;padding:2rem">No clients yet.</p>`}`;
+}
+
+function renderPricing(){
+  const svcRows=SERVICES.map(s=>`<tr><td style="padding:7px 0;font-weight:500">${s}</td><td style="padding:7px 0">${fmtMoney(prices[s]||0)}</td><td style="padding:7px 0;color:#888">${durations[s]||0} min</td><td style="padding:7px 0;text-align:right"><button class="sm" onclick="openPriceModal('${s.replace(/'/g,"\\'")}')">&#9998; Edit</button></td></tr>`).join("");
+  const addOnRows=ADD_ONS.map(s=>`<tr><td style="padding:7px 0;font-weight:500">${s}</td><td style="padding:7px 0">${fmtMoney(prices[s]||0)}</td><td style="padding:7px 0;color:#888">${durations[s]||0} min</td><td style="padding:7px 0;text-align:right"><button class="sm" onclick="openPriceModal('${s.replace(/'/g,"\\'")}')">&#9998; Edit</button></td></tr>`).join("");
+  return`
+  <div style="font-size:18px;font-weight:500;margin-bottom:1.25rem">Pricing & duration rules</div>
+
+  <div class="rule-card">
+    <div class="rule-card-title">Services</div>
+    <table style="font-size:13px"><thead><tr><th style="padding:5px 0;width:40%">Name</th><th style="padding:5px 0;width:25%">Base price</th><th style="padding:5px 0;width:25%">Duration</th><th></th></tr></thead><tbody>${svcRows}</tbody></table>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-card-title">Add-ons</div>
+    <table style="font-size:13px"><thead><tr><th style="padding:5px 0;width:40%">Name</th><th style="padding:5px 0;width:25%">Base price</th><th style="padding:5px 0;width:25%">Duration</th><th></th></tr></thead><tbody>${addOnRows}</tbody></table>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-card-title">By size (multiplies base price, adjusts duration)</div>
+    <table style="font-size:13px"><thead><tr><th style="padding:5px 0;width:33%;font-weight:400;color:#888">Size</th><th style="padding:5px 0;width:33%;font-weight:400;color:#888">Price multiplier</th><th style="padding:5px 0;font-weight:400;color:#888">Duration adjustment</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:5px 0">Mini</td><td style="padding:5px 0">×1</td><td style="padding:5px 0;color:#888">-10 min</td></tr>
+      <tr><td style="padding:5px 0">Small</td><td style="padding:5px 0">×1</td><td style="padding:5px 0;color:#888">+0 min</td></tr>
+      <tr><td style="padding:5px 0">Medium</td><td style="padding:5px 0">×1</td><td style="padding:5px 0;color:#888">+0 min</td></tr>
+      <tr><td style="padding:5px 0">Large</td><td style="padding:5px 0">×1.2</td><td style="padding:5px 0;color:#888">+15 min</td></tr>
+      <tr><td style="padding:5px 0">Extra large</td><td style="padding:5px 0">×1.4</td><td style="padding:5px 0;color:#888">+30 min</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-card-title">By behaviour (handling surcharge)</div>
+    <p style="font-size:13px;color:#888;margin-bottom:10px">A flat <strong style="color:#1a1a1a">$${BEH_SURCHARGE}</strong> surcharge is added if a pet has any of:</p>
+    <div>${BEH_SURCHARGE_TRAITS.map(t=>`<span class="rule-pill" style="background:#FDECEA;color:#E8534A">${t}</span>`).join("")}</div>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-card-title">By behaviour (extra time, no charge)</div>
+    <p style="font-size:13px;color:#888;margin-bottom:10px">An extra <strong style="color:#1a1a1a">${BEH_DUR_ADD} min</strong> is added to the appointment duration (no price change) if a pet has any of:</p>
+    <div>${BEH_DUR_TRAITS.map(t=>`<span class="rule-pill" style="background:#FAEEDA;color:#854F0B">${t}</span>`).join("")}</div>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-card-title">Matting surcharge</div>
+    <p style="font-size:13px;color:#888">De-matting time is billed at <strong style="color:#1a1a1a">$${MATTING_RATE}/hour</strong>. Enter the de-matting time (in minutes) on a booking — it's added to both the price and the appointment duration automatically.</p>
+  </div>`;
+}
+
+function renderFinances(){
+  const fi=bookings.filter(b=>b.status!=="cancelled"&&!b.waived);
+  const totalIncome=fi.reduce((s,b)=>s+bkPrice(b).finalTotal,0);
+  const totalExp=expenses.reduce((s,e)=>s+e.amount,0);
+  const profit=totalIncome-totalExp;
+  const outstanding=bookings.filter(b=>b.status!=="cancelled"&&!b.waived&&!b.paid);
+  const outTotal=outstanding.reduce((s,b)=>s+bkPrice(b).finalTotal,0);
+  const sortedExp=[...expenses].sort((a,b)=>b.date.localeCompare(a.date)||a.desc.localeCompare(b.desc));
+  const expRows=sortedExp.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${e.desc}</td><td style="text-align:right;color:#E8534A;font-weight:500">-${fmtMoney(e.amount)}</td><td><button class="sm" onclick="deleteExp(${e.id})">&#128465;</button></td></tr>`).join("");
+  const incRows=fi.map(b=>{const owner=ownerById(b.ownerId),pet=petById(b.petId),p=bkPrice(b);return`<tr><td>${fmtDate(b.date)}</td><td>${pet?.name||"?"} (${owner?.name||"?"})</td><td style="text-align:right;color:#5BAF7A;font-weight:500">+${fmtMoney(p.finalTotal)}</td><td>${b.paid?tag("Paid","#EAF7EE","#5BAF7A"):tag("Outstanding","#FDECEA","#E8534A")}</td></tr>`;}).join("");
+  return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem"><div class="stat"><div class="slabel">Income</div><div class="sval" style="color:#5BAF7A">${fmtMoney(totalIncome)}</div></div><div class="stat"><div class="slabel">Expenses</div><div class="sval" style="color:#E8534A">${fmtMoney(totalExp)}</div></div><div class="stat"><div class="slabel">Net profit</div><div class="sval" style="color:${profit>=0?"#185FA5":"#E8534A"}">${fmtMoney(Math.abs(profit))}</div></div><div class="stat"><div class="slabel">Outstanding</div><div class="sval" style="color:#854F0B">${fmtMoney(outTotal)}</div></div></div><div style="font-size:14px;font-weight:600;margin-bottom:10px">Add expense</div><div class="card" style="margin-bottom:1.5rem"><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:2;min-width:120px"><label class="lbl">Description</label><input type="text" id="exp-desc" placeholder="e.g. shampoo supplies"/></div><div style="flex:1;min-width:90px"><label class="lbl">Amount ($)</label><input type="number" id="exp-amt" placeholder="0.00"/></div><div style="flex:1;min-width:120px"><label class="lbl">Date</label><input type="date" id="exp-date" value="${todayStr()}"/></div><button class="primary" onclick="addExp()" style="flex-shrink:0;height:56px;width:64px;padding:0;font-size:13px;font-weight:700;border-radius:12px;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;align-self:flex-end"><span style="font-size:16px;line-height:1">+</span><span>Add</span></button></div></div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Income</div><div style="overflow-x:auto;margin-bottom:1.5rem"><table><thead><tr><th>Date</th><th>Client</th><th style="text-align:right">Amount</th><th>Payment</th></tr></thead><tbody>${incRows}</tbody></table></div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Expenses</div><div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th></th></tr></thead><tbody>${expRows}</tbody></table></div>`;
+}
+
+let bkEditing=null,bkActiveAddons=[],bkActiveProducts=[],bkBeforePhoto=null,bkAfterPhoto=null;
+async function bkPhotoSelected(input,slot){
+  const file=input.files[0];if(!file)return;
+  // Show local preview immediately
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const base64Full=e.target.result;
+    const base64=base64Full.split(",")[1];
+    // Show preview straight away
+    if(slot==="before")bkBeforePhoto=base64Full;
+    else bkAfterPhoto=base64Full;
+    renderBkPhotos(slot,"uploading");
+    // Upload to Google Drive
+    try{
+      const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({
+        action:"uploadPhoto",
+        filename:slot+"_"+Date.now()+".jpg",
+        mimeType:file.type||"image/jpeg",
+        base64
+      })});
+      const json=await res.json().catch(()=>({}));
+      if(json.ok&&json.url){
+        if(slot==="before")bkBeforePhoto=json.url;
+        else bkAfterPhoto=json.url;
+        renderBkPhotos(slot,"done");
+      }else{
+        console.error("Photo upload failed:",json);
+        renderBkPhotos(slot,"error");
+      }
+    }catch(err){
+      console.error("Photo upload error:",err);
+      renderBkPhotos(slot,"error");
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value="";
+}
+function bkRemovePhoto(slot){
+  if(slot==="before")bkBeforePhoto=null;else bkAfterPhoto=null;
+  renderBkPhotos();
+}
+function renderBkPhotos(onlySlot,status){
+  const slots=onlySlot?[onlySlot]:["before","after"];
+  slots.forEach(slot=>{
+    const data=slot==="before"?bkBeforePhoto:bkAfterPhoto;
+    const prev=document.getElementById("bk-"+slot+"-preview");
+    const actions=document.getElementById("bk-"+slot+"-actions");
+    if(!prev)return;
+    if(data){
+      const overlay=status==="uploading"?`<div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;border-radius:8px">⏳ Uploading...</div>`:
+                    status==="error"?`<div style="position:absolute;inset:0;background:rgba(232,83,74,0.7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;border-radius:8px">⚠️ Upload failed</div>`:"";
+      prev.style.position="relative";
+      prev.innerHTML=`<img src="${data}" style="width:100%;height:100%;object-fit:cover"/>${overlay}`;
+      prev.style.border="none";
+      if(actions)actions.style.display=status==="uploading"?"none":"flex";
+    }else{
+      prev.innerHTML=`<span style="font-size:20px">📷</span>Upload`;
+      prev.style.border="1.5px dashed var(--border)";
+      if(actions)actions.style.display="none";
+    }
+  });
+}
+/* Crop modal */
+let bkCropSlot=null,bkCropImg=null;
+function bkCropPhoto(slot){
+  const data=slot==="before"?bkBeforePhoto:bkAfterPhoto;
+  if(!data)return;
+  bkCropSlot=slot;
+  let overlay=document.getElementById("crop-overlay");
+  if(!overlay){
+    overlay=document.createElement("div");
+    overlay.id="crop-overlay";
+    overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px";
+    overlay.innerHTML=`
+      <div style="color:#fff;font-size:13px;font-weight:500">Drag to reposition · Pinch or scroll to zoom</div>
+      <div id="crop-viewport" style="width:280px;height:350px;overflow:hidden;border-radius:10px;position:relative;background:#000;cursor:grab;touch-action:none">
+        <img id="crop-img" draggable="false" style="position:absolute;transform-origin:0 0;user-select:none;pointer-events:none"/>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="range" id="crop-zoom" min="0.5" max="3" step="0.01" value="1" style="width:160px" oninput="cropZoomChange()"/>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeCropOverlay()" style="padding:8px 20px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer">Cancel</button>
+        <button onclick="applyCrop()" style="padding:8px 20px;border-radius:8px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-weight:500">Apply crop</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    // Drag to pan
+    const vp=overlay.querySelector("#crop-viewport");
+    let dragging=false,startX,startY,panX=0,panY=0,curPanX=0,curPanY=0;
+    vp.addEventListener("mousedown",e=>{dragging=true;startX=e.clientX-curPanX;startY=e.clientY-curPanY;vp.style.cursor="grabbing";});
+    window.addEventListener("mousemove",e=>{if(!dragging)return;panX=e.clientX-startX;panY=e.clientY-startY;curPanX=panX;curPanY=panY;cropUpdateTransform();});
+    window.addEventListener("mouseup",()=>{dragging=false;vp.style.cursor="grab";});
+    // Touch pan
+    let t0;
+    vp.addEventListener("touchstart",e=>{if(e.touches.length===1){t0={x:e.touches[0].clientX-curPanX,y:e.touches[0].clientY-curPanY};}e.preventDefault();},{passive:false});
+    vp.addEventListener("touchmove",e=>{if(e.touches.length===1){curPanX=e.touches[0].clientX-t0.x;curPanY=e.touches[0].clientY-t0.y;cropUpdateTransform();}e.preventDefault();},{passive:false});
+    // Scroll zoom
+    vp.addEventListener("wheel",e=>{e.preventDefault();const z=document.getElementById("crop-zoom");z.value=Math.min(3,Math.max(0.5,parseFloat(z.value)-e.deltaY*0.001));cropZoomChange();},{passive:false});
+  }
+  // Reset state
+  curPanX=0;curPanY=0;
+  const img=document.getElementById("crop-img");
+  img.onload=()=>{
+    const vp=document.getElementById("crop-viewport");
+    const scale=Math.max(280/img.naturalWidth,350/img.naturalHeight);
+    document.getElementById("crop-zoom").value=scale;
+    curPanX=(280-img.naturalWidth*scale)/2;
+    curPanY=(350-img.naturalHeight*scale)/2;
+    cropUpdateTransform();
+  };
+  img.src=data;
+  document.getElementById("crop-overlay").style.display="flex";
+}
+function cropUpdateTransform(){
+  const img=document.getElementById("crop-img");
+  const z=parseFloat(document.getElementById("crop-zoom").value);
+  img.style.transform=`translate(${curPanX}px,${curPanY}px) scale(${z})`;
+}
+function cropZoomChange(){cropUpdateTransform();}
+let curPanX=0,curPanY=0;
+function closeCropOverlay(){document.getElementById("crop-overlay").style.display="none";}
+function applyCrop(){
+  const img=document.getElementById("crop-img");
+  const z=parseFloat(document.getElementById("crop-zoom").value);
+  const canvas=document.createElement("canvas");
+  canvas.width=400;canvas.height=500;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,curPanX/z,curPanY/z,400/z,500/z,0,0,400,500);
+  const result=canvas.toDataURL("image/jpeg",0.92);
+  if(bkCropSlot==="before")bkBeforePhoto=result;
+  else bkAfterPhoto=result;
+  closeCropOverlay();
+  renderBkPhotos();
+}
+function openBkModal(b){
+  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;
+  document.getElementById("bk-title").textContent=b?"Edit booking":"New booking";
+  // Populate all pets (sorted alphabetically)
+  const petSel=document.getElementById("bk-pet");
+  petSel.innerHTML=`<option value="">Select pet...</option>`+[...pets].sort((a,z)=>a.name.localeCompare(z.name)).map(p=>{const ow=owners.find(o=>p.ownerIds.includes(o.id));return`<option value="${p.id}">${p.name} — ${p.breed}${ow?" ("+ow.name+")":""}`;}).join("");
+  document.getElementById("bk-service").innerHTML=SERVICES.map(s=>`<option>${s}</option>`).join("");
+  document.getElementById("bk-service").value=b?.service||"Full groom";
+  document.getElementById("bk-date").value=b?.date||todayStr();
+  document.getElementById("bk-time").value=b?.time||"09:00";
+  document.getElementById("bk-status").value=b?.status??"confirmed";
+  document.getElementById("bk-notes").value=b?.notes||"";
+  document.getElementById("bk-matting").value=b?.mattingMinutes||0;
+  document.getElementById("bk-custom").value=b?.customPrice??"";
+  document.getElementById("bk-waived").checked=b?.waived||false;
+  document.getElementById("bk-paid").checked=b?.paid||false;
+  renderBkAddons(bkActiveAddons);
+  renderBkProducts(bkActiveProducts);
+  renderBkPhotos();
+  if(b?.petId){petSel.value=b.petId;updateBkOwnerFromPet(b.petId,b.ownerId);}else{updateBkOwnerFromPet("","");}
+  updateBkPrice();
+  document.getElementById("modal-booking").classList.add("open");
+  petSel.onchange=()=>{updateBkOwnerFromPet(petSel.value,"");updateBkPrice();};
+  document.getElementById("bk-service").onchange=updateBkPrice;
+  document.getElementById("bk-matting").oninput=updateBkPrice;
+  document.getElementById("bk-custom").oninput=updateBkPrice;
+  document.getElementById("bk-waived").onchange=updateBkPrice;
+}
+function updateBkOwnerFromPet(petId,preferOwnerId){
+  const pet=petById(Number(petId));
+  const ownerHidden=document.getElementById("bk-owner");
+  const ownerDisplay=document.getElementById("bk-owner-display");
+  if(!pet){ownerHidden.value="";if(ownerDisplay)ownerDisplay.textContent="—";return;}
+  // Pick preferred owner or first linked owner
+  const oid=preferOwnerId&&pet.ownerIds.includes(Number(preferOwnerId))?Number(preferOwnerId):pet.ownerIds[0];
+  const owner=ownerById(oid);
+  ownerHidden.value=oid||"";
+  if(ownerDisplay)ownerDisplay.textContent=owner?`${owner.name} · ${owner.phone}`:"—";
+  // If multiple owners, show a small selector
+  if(pet.ownerIds.length>1){
+    const opts=pet.ownerIds.map(id=>{const o=ownerById(id);return`<option value="${id}"${id===oid?" selected":""}>${o?.name||id}</option>`;}).join("");
+    ownerDisplay.innerHTML=`<select onchange="bkOwnerChanged(this)" style="border:none;background:transparent;padding:0;font-size:13px;width:100%;outline:none">${opts}</select>`;
+  }
+}
+function renderBkAddons(active){
+  document.getElementById("bk-addons").innerHTML=ADD_ONS.map(a=>`<button type="button" onclick="toggleAddon('${a}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${active.includes(a)?"var(--teal)":"transparent"};color:${active.includes(a)?"#fff":"#666"};border:${active.includes(a)?"1px solid var(--teal)":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${active.includes(a)?"✓ ":""}${a} (+${fmtMoney(prices[a]||0)})</button>`).join("");
+}
+function renderBkProducts(active){
+  const el=document.getElementById("bk-products");if(!el)return;
+  const prods=getProductsFromExpenses();
+  const available=prods.filter(p=>!emptyProducts.includes(p));
+  const empty=prods.filter(p=>emptyProducts.includes(p));
+  let html="";
+  if(!prods.length){
+    html=`<span style="font-size:11px;color:#aaa">Add product expenses to populate this list.</span>`;
+  } else {
+    available.forEach(p=>{
+      const isActive=active.includes(p);
+      html+=`<div style="display:inline-flex;align-items:center;gap:0;margin-right:5px;margin-bottom:5px;border-radius:20px;border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};overflow:hidden">`;
+      html+=`<button type="button" onclick="toggleProduct('${p.replace(/'/g,"\\'")}')" style="padding:4px 10px;font-size:11px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#555"};border:none;font-family:inherit;font-weight:500;cursor:pointer;border-radius:0">${isActive?"✓ ":""}${p}</button>`;
+      html+=`<button type="button" title="Mark as empty (hides from picker)" onclick="toggleEmptyProduct('${p.replace(/'/g,"\\'")}')" style="padding:4px 7px;font-size:10px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"rgba(255,255,255,0.7)":"#aaa"};border:none;border-left:1px solid ${isActive?"rgba(255,255,255,0.3)":"var(--border)"};font-family:inherit;cursor:pointer;border-radius:0" title="Mark empty">∅</button>`;
+      html+=`</div>`;
+    });
+    if(empty.length){
+      html+=`<div style="width:100%;margin-top:6px;margin-bottom:3px;font-size:10px;color:#aaa;font-weight:500;text-transform:uppercase;letter-spacing:0.04em">Empty — tap to restore</div>`;
+      empty.forEach(p=>{
+        html+=`<button type="button" onclick="toggleEmptyProduct('${p.replace(/'/g,"\\'")}')" style="padding:3px 9px;font-size:10px;border-radius:20px;background:#f5f5f5;color:#aaa;border:1px dashed #ddd;font-family:inherit;cursor:pointer;margin-right:4px;margin-bottom:4px;text-decoration:line-through">${p}</button>`;
+      });
+    }
+  }
+  el.innerHTML=html;
+}
+function toggleAddon(a){
+  if(bkActiveAddons.includes(a))bkActiveAddons=bkActiveAddons.filter(x=>x!==a);else bkActiveAddons.push(a);
+  renderBkAddons(bkActiveAddons);updateBkPrice();
+}
+function toggleProduct(p){
+  if(bkActiveProducts.includes(p))bkActiveProducts=bkActiveProducts.filter(x=>x!==p);else bkActiveProducts.push(p);
+  renderBkProducts(bkActiveProducts);
+}
+function bkOwnerChanged(sel){document.getElementById("bk-owner").value=sel.value;updateBkPrice();}
+function renderBkPets(ownerId,selPetId){/* legacy no-op */}
+function updateBkPrice(){
+  const svc=document.getElementById("bk-service").value;
+  const petId=Number(document.getElementById("bk-pet").value);
+  const pet=petById(petId);
+  const cost=computeCost(svc,bkActiveAddons,pet);
+  const mattingMins=Number(document.getElementById("bk-matting").value)||0;
+  const matting=mattingCost(mattingMins);
+  const customRaw=document.getElementById("bk-custom").value;
+  const useCustom=customRaw!=="";
+  const calcSub=cost.total+matting;
+  const subtotal=useCustom?Number(customRaw):calcSub;
+  const waived=document.getElementById("bk-waived").checked;
+  const disc=0;
+  const total=waived?0:subtotal-disc;
+  const duration=cost.duration+mattingMins;
+  let html=`<div class="price-row"><span style="color:#888">Base (${svc})</span><span>${fmtMoney(cost.base)}</span></div>`;
+  if(bkActiveAddons.length)html+=`<div class="price-row"><span style="color:#534AB7">Add-ons</span><span>+${fmtMoney(cost.addOnCost)}</span></div>`;
+  if(cost.sizeAdj)html+=`<div class="price-row"><span style="color:${cost.sizeAdj>0?"#E8534A":"#5BAF7A"}">Size adj. (${pet?.size})</span><span>${cost.sizeAdj>0?"+":""}${fmtMoney(cost.sizeAdj)}</span></div>`;
+  if(cost.behAdj)html+=`<div class="price-row" style="color:#E8534A"><span>Handling surcharge</span><span>+${fmtMoney(cost.behAdj)}</span></div>`;
+  if(matting)html+=`<div class="price-row" style="color:#E8534A"><span>Matting (${mattingMins} min)</span><span>+${fmtMoney(matting)}</span></div>`;
+  if(disc)html+=`<div class="price-row" style="color:#5BAF7A"><span>Discount (${DISC_PCT}%)</span><span>-${fmtMoney(disc)}</span></div>`;
+  html+=`<div class="price-row total"><span>Total</span><span>${waived?"Waived":fmtMoney(total)}</span></div><div class="price-row"><span style="color:#888;font-size:11px">Est. duration</span><span style="color:#888;font-size:11px">${duration} min</span></div>`;
+  document.getElementById("bk-price-box").innerHTML=html;
+}
+function closeBkModal(){document.getElementById("modal-booking").classList.remove("open");bkEditing=null;bkActiveAddons=[];bkActiveProducts=[];}
+function saveBkModal(){
+  const ownerId=Number(document.getElementById("bk-owner").value);
+  const petId=Number(document.getElementById("bk-pet").value);
+  if(!petId){alert("Please select a pet.");return;}
+  if(!ownerId){alert("The selected pet has no linked owner. Please link an owner to the pet first.");return;}
+  const customRaw=document.getElementById("bk-custom").value;
+  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
+  if(bkEditing){bookings=bookings.map(b=>b.id===bkEditing.id?{...b,...obj}:b);}else{bookings.push({id:nextId++,...obj});}
+  save();closeBkModal();render();
+}
+function markBkStatus(id,status){bookings=bookings.map(b=>b.id===id?{...b,status}:b);save();render();}
+function editBk(id){const b=bookings.find(x=>x.id===id);if(!b)return;openBkModal(b);}
+function deleteBk(id){openConfirm("Delete this booking?","Delete",()=>{bookings=bookings.filter(b=>b.id!==id);save();render();});}
+function togglePaid(id){bookings=bookings.map(b=>b.id===id?{...b,paid:!b.paid,waived:false}:b);save();render();}
+function waiveBk(id){openConfirm("Waive payment for this booking?","Waive",()=>{bookings=bookings.map(b=>b.id===id?{...b,waived:true,paid:false}:b);save();render();});}
+
+let ptEditing=null,ptActiveBehaviour=[],ptActiveCoats=[],ptActiveMedical=[],ptActiveOwners=[],ptPhotoData=null;
+function ptPhotoSelected(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{openCropModal(e.target.result);};
+  reader.readAsDataURL(file);
+}
+function ptRemovePhoto(){ptPhotoData=null;renderPtPhoto();}
+function renderPtPhoto(){
+  const preview=document.getElementById("pt-photo-preview");
+  const removeBtn=document.getElementById("pt-photo-remove");
+  if(!preview)return;
+  if(ptPhotoData){
+    preview.innerHTML=`<img src="${ptPhotoData}" style="width:100%;height:100%;object-fit:cover"/>`;
+    if(removeBtn)removeBtn.style.display="";
+  }else{
+    preview.innerHTML="🐾";
+    if(removeBtn)removeBtn.style.display="none";
+  }
+}
+function openPtModal(pet){
+  ptEditing=pet||null;
+  document.getElementById("pt-title").textContent=pet?"Edit pet profile":"New pet profile";
+  document.getElementById("pt-name").value=pet?.name||"";
+  document.getElementById("pt-breed").value=pet?.breed||"";
+  document.getElementById("pt-dob").value=pet?.dob||"";
+  document.getElementById("pt-sex").value=pet?.sex||"Male";
+  document.getElementById("pt-desexed").value=pet?(pet.desexed?"yes":"no"):"yes";
+  document.getElementById("pt-size").value=pet?.size||"Medium";
+  document.getElementById("pt-mednotes").value=pet?.medicalNotes||"";
+  document.getElementById("pt-prefstyle").value=pet?.preferredStyle||"";
+  document.getElementById("pt-lastnote").value=pet?.lastNote||"";
+  ptActiveBehaviour=[...(pet?.behaviour||[])];
+  ptActiveCoats=[...(pet?.coatTypes||[])];
+  ptActiveMedical=[...(pet?.medicalTags||[])];
+  ptActiveOwners=[...(pet?.ownerIds||[])];
+  ptPhotoData=pet?.photo||null;
+  document.getElementById("pt-special-custom").value=pet?.customSpecialHandling||"";
+  renderPtPhoto();
+  renderPtToggles();
+  document.getElementById("modal-pet").classList.add("open");
+}
+function renderPtToggles(){
+  renderToggle("pt-behaviour",BEHAVIOUR_TRAITS.filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)),ptActiveBehaviour.filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)),t=>{const c=behColor(t);return{bg:c.bg,text:c.text};},"ptBeh");
+  renderToggle("pt-coats",COAT_TYPES,ptActiveCoats,null,"ptCoat");
+  renderToggle("pt-special",SPECIAL_HANDLING_TRAITS,ptActiveBehaviour.filter(t=>SPECIAL_HANDLING_TRAITS.includes(t)),()=>({bg:"#FDECEA",text:"#E8534A"}),"ptSH");
+  renderToggle("pt-medical",MEDICAL_TAGS,ptActiveMedical,t=>{const c=medColor(t);return{bg:c.bg,text:c.text};},"ptMed");
+  renderToggle("pt-owners",owners.map(o=>o.name),owners.filter(o=>ptActiveOwners.includes(o.id)).map(o=>o.name),null,"ptOwn");
+}
+function renderToggle(elId,opts,active,colorFn,prefix){
+  const el=document.getElementById(elId);if(!el)return;
+  el.innerHTML=opts.map((opt,i)=>{
+    const isActive=active.includes(opt);
+    const c=colorFn&&isActive?colorFn(opt):null;
+    const bg=isActive?(c?c.bg:"var(--teal)"):"transparent";
+    const color=isActive?(c?c.text:"#fff"):"#666";
+    const border=isActive?(c?`1px solid ${c.text}`:"1px solid var(--teal)"):"1px solid var(--border)";
+    return`<button type="button" style="padding:3px 9px;font-size:11px;border-radius:20px;background:${bg};color:${color};border:${border}" onclick="${prefix}Toggle(${i})">${opt}</button>`;
+  }).join("");
+}
+function ptBehToggle(i){const t=BEHAVIOUR_TRAITS.filter(x=>!SPECIAL_HANDLING_TRAITS.includes(x))[i];if(!t)return;ptActiveBehaviour=ptActiveBehaviour.includes(t)?ptActiveBehaviour.filter(x=>x!==t):[...ptActiveBehaviour,t];renderPtToggles();}
+function ptSHToggle(i){const t=SPECIAL_HANDLING_TRAITS[i];if(!t)return;ptActiveBehaviour=ptActiveBehaviour.includes(t)?ptActiveBehaviour.filter(x=>x!==t):[...ptActiveBehaviour,t];renderPtToggles();}
+function ptCoatToggle(i){const t=COAT_TYPES[i];ptActiveCoats=ptActiveCoats.includes(t)?ptActiveCoats.filter(x=>x!==t):[...ptActiveCoats,t];renderPtToggles();}
+function ptMedToggle(i){const t=MEDICAL_TAGS[i];ptActiveMedical=ptActiveMedical.includes(t)?ptActiveMedical.filter(x=>x!==t):[...ptActiveMedical,t];renderPtToggles();}
+function ptOwnToggle(i){const oid=owners[i]?.id;if(!oid)return;ptActiveOwners=ptActiveOwners.includes(oid)?ptActiveOwners.filter(x=>x!==oid):[...ptActiveOwners,oid];renderPtToggles();}
+function closePtModal(){document.getElementById("modal-pet").classList.remove("open");ptEditing=null;}
+function savePtModal(){
+  const name=document.getElementById("pt-name").value.trim();
+  const breed=document.getElementById("pt-breed").value.trim();
+  if(!name||!breed){alert("Please enter name and breed.");return;}
+  if(!ptActiveOwners.length){alert("Please link at least one owner.");return;}
+  const obj={name,breed,dob:document.getElementById("pt-dob").value,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-lastnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim()};
+  if(ptEditing){pets=pets.map(p=>p.id===ptEditing.id?{...p,...obj}:p);}else{pets.push({id:nextPetId++,...obj});}
+  save();closePtModal();render();
+}
+function editPet(id){const p=pets.find(x=>x.id===id);if(p)openPtModal(p);}
+function deletePet(id){openConfirm("Delete this pet profile?","Delete",()=>{pets=pets.filter(p=>p.id!==id);save();render();});}
+
+let owEditing=null;
+function openOwModal(owner){
+  owEditing=owner||null;
+  document.getElementById("ow-title").textContent=owner?"Edit owner":"New owner";
+  document.getElementById("ow-name").value=owner?.name||"";
+  document.getElementById("ow-phone").value=owner?.phone||"";
+  document.getElementById("ow-email").value=owner?.email||"";
+  renderOwContactToggle(owner?.contact||"");
+  document.getElementById("ow-notes").value=owner?.notes||"";
+  document.getElementById("modal-owner").classList.add("open");
+}
+const OW_CONTACT_OPTS=["SMS","Email","Phone","WhatsApp","Facebook"];
+const OW_CONTACT_ICONS={
+  SMS:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+  Email:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>',
+  Phone:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+  WhatsApp:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M14.7 13.5c-.2-.1-.9-.4-1.05-.5-.15-.05-.25-.07-.35.08s-.4.5-.49.6c-.09.1-.18.12-.33.04a4.18 4.18 0 0 1-1.23-.76 4.6 4.6 0 0 1-.85-1.06c-.09-.15 0-.24.07-.31l.23-.27a.97.97 0 0 0 .15-.26.27.27 0 0 0-.01-.26c-.04-.08-.35-.84-.48-1.14-.12-.3-.25-.25-.35-.26h-.3c-.1 0-.27.04-.41.19-.14.15-.54.52-.54 1.28s.55 1.48.63 1.58c.08.1 1.08 1.65 2.62 2.31.97.42 1.35.45 1.84.38.3-.04.9-.37 1.03-.72.13-.36.13-.66.09-.73-.04-.06-.14-.1-.3-.18z" stroke-width="1.3"/></svg>',
+  Facebook:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M8.5 13.8 10.8 11l2.2 1.8 2.5-2.8" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/></svg>'
+};
+function renderOwContactToggle(selected){
+  const el=document.getElementById("ow-contact-toggle");if(!el)return;
+  document.getElementById("ow-contact").value=selected||"";
+  el.innerHTML=OW_CONTACT_OPTS.map(opt=>{
+    const isActive=selected===opt;
+    return`<button type="button" onclick="owContactSelect('${opt}')" style="display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;border-radius:20px;border:none;background:${isActive?"#534AB7":"#EEEBFA"};color:${isActive?"#fff":"#534AB7"};cursor:pointer;font-family:inherit;font-weight:500">${OW_CONTACT_ICONS[opt]} ${opt}</button>`;
+  }).join("");
+}
+function owContactSelect(val){
+  const cur=document.getElementById("ow-contact").value;
+  const next=cur===val?"":val;
+  renderOwContactToggle(next);
+}
+function closeOwModal(){document.getElementById("modal-owner").classList.remove("open");owEditing=null;}
+function saveOwModal(){
+  const name=document.getElementById("ow-name").value.trim();
+  const phone=document.getElementById("ow-phone").value.trim();
+  if(!name||!phone){alert("Please enter name and phone.");return;}
+  const obj={name,phone:fmtPhone(phone),email:document.getElementById("ow-email").value.trim(),contact:document.getElementById("ow-contact").value,notes:document.getElementById("ow-notes").value.trim()};
+  if(owEditing){owners=owners.map(o=>o.id===owEditing.id?{...o,...obj}:o);}else{owners.push({id:nextOId++,...obj});}
+  save();closeOwModal();render();
+}
+function editOwner(id){const o=owners.find(x=>x.id===id);if(o)openOwModal(o);}
+function deleteOwner(id){openConfirm("Delete this owner?","Delete",()=>{owners=owners.filter(o=>o.id!==id);pets=pets.map(p=>({...p,ownerIds:p.ownerIds.filter(oid=>oid!==id)}));save();render();});}
+
+let priceEditing=null;
+function openPriceModal(s){
+  priceEditing=s;
+  document.getElementById("mp-title").textContent=`Edit — ${s}`;
+  document.getElementById("mp-price").value=prices[s]||0;
+  document.getElementById("mp-dur").value=durations[s]||0;
+  document.getElementById("modal-price").classList.add("open");
+}
+function closePriceModal(){document.getElementById("modal-price").classList.remove("open");priceEditing=null;}
+function savePriceModal(){
+  if(!priceEditing)return;
+  prices[priceEditing]=parseFloat(document.getElementById("mp-price").value)||0;
+  durations[priceEditing]=parseInt(document.getElementById("mp-dur").value)||0;
+  save();closePriceModal();render();
+}
+
+function addExp(){
+  const desc=document.getElementById("exp-desc")?.value?.trim();
+  const amt=parseFloat(document.getElementById("exp-amt")?.value);
+  const date=document.getElementById("exp-date")?.value;
+  if(!desc||isNaN(amt)||amt<0||!date){alert("Please fill in all expense fields.");return;}
+  expenses.push({id:nextExpId++,desc,amount:amt,date});
+  save();render();
+  // Refresh product buttons if booking modal is open
+  if(document.getElementById("modal-booking").classList.contains("open"))renderBkProducts(bkActiveProducts);
+}
+function deleteExp(id){openConfirm("Remove this expense?","Remove",()=>{expenses=expenses.filter(e=>e.id!==id);save();render();});}
+
+// Build tabs row
+document.getElementById("tabs-row").innerHTML=["dashboard","bookings","calendar","pets","clients","pricing","finances"].map(t=>`<button class="tab-btn" onclick="switchTab('${t}')" id="tab-${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join("");
+
+document.getElementById("tab-dashboard").classList.add("active");
+
+function switchTab(t){
+  currentTab=t;
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("tab-"+t)?.classList.add("active");
+  render();
+}
+
+// Load data from Google Sheets on startup, always render
+loadFromSheets().then(()=>render()).catch(()=>render());
+</script>
+
+<!-- Crop Modal -->
+<div id="modal-crop" class="modal-bg">
+<div class="modal" style="width:500px">
+<h2>Crop & adjust photo</h2>
+<div style="position:relative;width:100%;height:320px;background:#111;border-radius:10px;overflow:hidden;margin-bottom:12px;cursor:crosshair" id="crop-container">
+  <img id="crop-img" style="position:absolute;transform-origin:top left" draggable="false"/>
+  <div id="crop-overlay" style="position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 2000px rgba(0,0,0,0.45)"></div>
+  <div id="crop-box" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);cursor:move"></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+  <label class="lbl" style="margin:0;white-space:nowrap">Zoom</label>
+  <input type="range" id="crop-zoom" min="0.5" max="3" step="0.01" value="1" style="flex:1;min-width:100px" oninput="cropZoomChanged()"/>
+  <span id="crop-zoom-val" style="font-size:12px;color:#888;min-width:30px">1×</span>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+  <button type="button" onclick="cropRotate(-90)" style="flex:1">↺ Rotate left</button>
+  <button type="button" onclick="cropRotate(90)" style="flex:1">↻ Rotate right</button>
+  <button type="button" onclick="cropFlip()" style="flex:1">⇌ Flip</button>
+</div>
+<div class="row-end"><button onclick="closeCropModal()">Cancel</button><button class="primary" onclick="applyCrop()">Use photo</button></div>
+</div>
+</div>
+
+<script>
+// ── IMAGE CROP ──────────────────────────────────────────────────────────
+let _cropImg=null,_cropRaw=null,_cropScale=1,_cropRot=0,_cropFlip=false;
+let _cropX=0,_cropY=0,_cropW=200,_cropH=200;
+let _drag=false,_dragSX=0,_dragSY=0,_dragBX=0,_dragBY=0;
+let _imgW=0,_imgH=0;
+
+function openCropModal(src){
+  _cropRaw=src;_cropScale=1;_cropRot=0;_cropFlip=false;
+  document.getElementById("crop-zoom").value=1;
+  document.getElementById("crop-zoom-val").textContent="1×";
+  const ci=document.getElementById("crop-img");
+  ci.onload=()=>{ _imgW=ci.naturalWidth;_imgH=ci.naturalHeight; initCropBox(); };
+  ci.src=src;
+  document.getElementById("modal-crop").classList.add("open");
+  document.getElementById("modal-pet").classList.remove("open");
+}
+function closeCropModal(){
+  document.getElementById("modal-crop").classList.remove("open");
+  document.getElementById("modal-pet").classList.add("open");
+}
+function initCropBox(){
+  const cont=document.getElementById("crop-container");
+  const cW=cont.clientWidth,cH=cont.clientHeight;
+  const s=Math.min(cW/_imgW,cH/_imgH,1);
+  _cropScale=s;
+  document.getElementById("crop-zoom").min=s*0.5;
+  document.getElementById("crop-zoom").max=s*3;
+  document.getElementById("crop-zoom").value=s;
+  document.getElementById("crop-zoom-val").textContent=(1).toFixed(1)+"×";
+  positionImg();
+  const size=Math.min(cW,cH)*0.7;
+  _cropX=(cW-size)/2;_cropY=(cH-size)/2;_cropW=size;_cropH=size;
+  updateCropBox();
+}
+function positionImg(){
+  const cont=document.getElementById("crop-container");
+  const ci=document.getElementById("crop-img");
+  const cW=cont.clientWidth,cH=cont.clientHeight;
+  const dW=_imgW*_cropScale,dH=_imgH*_cropScale;
+  const ox=(cW-dW)/2,oy=(cH-dH)/2;
+  let tr=`translate(${ox}px,${oy}px) scale(${_cropScale})`;
+  if(_cropFlip)tr+=` scaleX(-1)`;
+  if(_cropRot)tr+=` rotate(${_cropRot}deg)`;
+  ci.style.transform=tr;
+  ci.style.transformOrigin="top left";
+  ci.style.width=_imgW+"px";
+  ci.style.height=_imgH+"px";
+}
+function cropZoomChanged(){
+  _cropScale=parseFloat(document.getElementById("crop-zoom").value);
+  const cont=document.getElementById("crop-container");
+  const baseS=Math.min(cont.clientWidth/_imgW,cont.clientHeight/_imgH,1);
+  document.getElementById("crop-zoom-val").textContent+="";
+  document.getElementById("crop-zoom-val").textContent=(_cropScale/baseS).toFixed(1)+"×";
+  positionImg();
+}
+function cropRotate(deg){_cropRot=(_cropRot+deg+360)%360;positionImg();}
+function cropFlip(){_cropFlip=!_cropFlip;positionImg();}
+function updateCropBox(){
+  const box=document.getElementById("crop-box");
+  box.style.left=_cropX+"px";box.style.top=_cropY+"px";
+  box.style.width=_cropW+"px";box.style.height=_cropH+"px";
+}
+
+// Drag crop box
+const cropBox=document.getElementById("crop-box");
+cropBox.addEventListener("mousedown",e=>{_drag=true;_dragSX=e.clientX;_dragSY=e.clientY;_dragBX=_cropX;_dragBY=_cropY;e.preventDefault();});
+document.addEventListener("mousemove",e=>{
+  if(!_drag)return;
+  const cont=document.getElementById("crop-container");
+  _cropX=Math.max(0,Math.min(_dragBX+(e.clientX-_dragSX),cont.clientWidth-_cropW));
+  _cropY=Math.max(0,Math.min(_dragBY+(e.clientY-_dragSY),cont.clientHeight-_cropH));
+  updateCropBox();
+});
+document.addEventListener("mouseup",()=>{_drag=false;});
+// Touch support
+cropBox.addEventListener("touchstart",e=>{const t=e.touches[0];_drag=true;_dragSX=t.clientX;_dragSY=t.clientY;_dragBX=_cropX;_dragBY=_cropY;e.preventDefault();},{passive:false});
+document.addEventListener("touchmove",e=>{
+  if(!_drag)return;
+  const t=e.touches[0];
+  const cont=document.getElementById("crop-container");
+  _cropX=Math.max(0,Math.min(_dragBX+(t.clientX-_dragSX),cont.clientWidth-_cropW));
+  _cropY=Math.max(0,Math.min(_dragBY+(t.clientY-_dragSY),cont.clientHeight-_cropH));
+  updateCropBox();
+},{passive:false});
+document.addEventListener("touchend",()=>{_drag=false;});
+
+function applyCrop(){
+  const ci=document.getElementById("crop-img");
+  const cont=document.getElementById("crop-container");
+  const cW=cont.clientWidth,cH=cont.clientHeight;
+  // Work out what portion of the original image the crop box covers
+  const dW=_imgW*_cropScale,dH=_imgH*_cropScale;
+  const ox=(cW-dW)/2,oy=(cH-dH)/2;
+  const sx=(_cropX-ox)/_cropScale,sy=(_cropY-oy)/_cropScale;
+  const sw=_cropW/_cropScale,sh=_cropH/_cropScale;
+  const canvas=document.createElement("canvas");
+  const OUT=300;canvas.width=OUT;canvas.height=OUT;
+  const ctx=canvas.getContext("2d");
+  ctx.save();
+  if(_cropFlip){ctx.translate(OUT,0);ctx.scale(-1,1);}
+  if(_cropRot){ctx.translate(OUT/2,OUT/2);ctx.rotate(_cropRot*Math.PI/180);ctx.translate(-OUT/2,-OUT/2);}
+  ctx.drawImage(ci,Math.max(0,sx),Math.max(0,sy),Math.min(sw,_imgW),Math.min(sh,_imgH),0,0,OUT,OUT);
+  ctx.restore();
+  ptPhotoData=canvas.toDataURL("image/jpeg",0.92);
+  renderPtPhoto();
+  closeCropModal();
+}
+// ───────────────────────────────────────────────────────────────────────
+</script>
+</body>
+</html>
