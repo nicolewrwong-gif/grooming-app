@@ -110,8 +110,6 @@ tr:hover td{background:#fafbfc}
   </div>
   <div style="display:flex;align-items:center;gap:14px">
     <span id="sync-status"></span>
-    <button id="sync-btn" onclick="manualSync()" style="font-size:11px;padding:4px 10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer">☁️ Sync</button><button onclick="loadFromSheets()" style="font-size:11px;padding:4px 10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer">⬇️ Load</button>
-    <button onclick="loadFromSheets()" style="font-size:11px;padding:4px 10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer">⬇️ Load</button>
     <button class="accent" onclick="openBkModal(null)">+ New booking</button>
   </div>
 </div>
@@ -305,7 +303,7 @@ const sortBehTraits=arr=>[...arr].sort((a,b)=>behColor(a).rank-behColor(b).rank|
 const medColor=t=>({bg:"#FDECEA",text:"#E8534A"});
 
 // ── GOOGLE SHEETS SYNC ─────────────────────────────────────────────────
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg8vy_t6w9f4xCxB7cJz7xM8U0iiCzDED0UV2j-Ypu7OeFno8ROwCp0qVTjAyjHWHy/exec"; // ← paste your deployed Apps Script URL here
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCzLf6yXK5KjzHEmobU0qaGkuPYE1XdJDh7XR0UJISAKCxVKmt4NK-b_wqFdGZbPf2/exec"; // ← paste your deployed Apps Script URL here
 
 let _saveTimer=null;
 async function pushToSheets(){
@@ -385,6 +383,12 @@ async function loadFromSheets(){
       if(d.Durations)durations=d.Durations;
       if(d.Meta){nextId=d.Meta.nextId||nextId;nextPetId=d.Meta.nextPetId||nextPetId;nextOId=d.Meta.nextOId||nextOId;nextExpId=d.Meta.nextExpId||nextExpId;}
       reattachPhotos();
+      // Save Sheet data to localStorage so it persists on reload
+      lss("pg_bookings2",bookings.map(b=>{const{beforePhoto,afterPhoto,...r}=b;return r;}));
+      lss("pg_pets2",pets.map(p=>{const{photo,...r}=p;return r;}));
+      lss("pg_owners2",owners);lss("pg_expenses2",expenses);
+      lss("pg_prices2",prices);lss("pg_dur2",durations);
+      lss("pg_nextId2",nextId);lss("pg_nextPetId2",nextPetId);lss("pg_nextOId2",nextOId);lss("pg_nextExpId2",nextExpId);
       setSyncStatus("✓ Loaded");setTimeout(()=>setSyncStatus(""),2000);
       render();return true;
     }else{
