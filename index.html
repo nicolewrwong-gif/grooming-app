@@ -424,32 +424,10 @@ function reattachPhotos(){
   const petPhotos=lsg("pg_petPhotos2",{});
   pets=pets.map(p=>({...p,photo:petPhotos[p.id]||null}));
 }
-let bookings=lsg("pg_bookings2",[
-  {id:1,ownerId:1,petId:1,service:"Full groom",addOns:[],date:"2026-06-12",time:"09:00",status:"confirmed",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
-  {id:2,ownerId:2,petId:2,service:"Bath & brush",addOns:[],date:"2026-06-12",time:"11:00",status:"confirmed",notes:"Sensitive skin",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
-  {id:3,ownerId:3,petId:3,service:"Full groom",addOns:["De-shedding treatment"],date:"2026-06-12",time:"14:00",status:"pending",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
-  {id:4,ownerId:4,petId:4,service:"Full groom",addOns:[],date:"2026-06-15",time:"10:00",status:"confirmed",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
-  {id:5,ownerId:5,petId:5,service:"Full groom",addOns:["Poodle point"],date:"2026-06-18",time:"09:30",status:"confirmed",notes:"",waived:false,discount:false,paid:false,mattingMinutes:0,customPrice:null},
-]);
-let pets=lsg("pg_pets2",[
-  {id:1,name:"Max",breed:"Labrador",dob:"2021-03-15",sex:"Male",desexed:true,size:"Large",coatTypes:["Smooth Coat"],behaviour:["Friendly","Good with handling"],medicalTags:[],medicalNotes:"No known allergies.",ownerIds:[1,6],lastNote:""},
-  {id:2,name:"Bella",breed:"Poodle",dob:"2022-07-02",sex:"Female",desexed:true,size:"Medium",coatTypes:["Curly Coat"],behaviour:["Anxious","Noise sensitive"],medicalTags:[],medicalNotes:"Sensitive skin — hypoallergenic shampoo only.",ownerIds:[2],lastNote:"Went well with low-noise dryer."},
-  {id:3,name:"Coco",breed:"Shih Tzu",dob:"2020-11-20",sex:"Female",desexed:false,size:"Small",coatTypes:["Silky Coat","Double Coat"],behaviour:[],medicalTags:[],medicalNotes:"Keep away from other dogs in waiting area.",ownerIds:[3],lastNote:""},
-  {id:4,name:"Charlie",breed:"Border Collie",dob:"2019-05-10",sex:"Male",desexed:true,size:"Medium",coatTypes:["Double Coat"],behaviour:["Friendly"],medicalTags:[],medicalNotes:"",ownerIds:[4],lastNote:""},
-  {id:5,name:"Luna",breed:"Maltese",dob:"2023-01-08",sex:"Female",desexed:false,size:"Mini",coatTypes:["Silky Coat"],behaviour:["Fear of clippers","Anxious"],medicalTags:[],medicalNotes:"Mild anxiety around clippers.",ownerIds:[5],lastNote:""},
-]);
-let owners=lsg("pg_owners2",[
-  {id:1,name:"Sarah Mitchell",phone:"0412 345 678",email:"sarah.m@email.com"},
-  {id:2,name:"Tom Nguyen",phone:"0421 987 654",email:"tom.n@email.com"},
-  {id:3,name:"Claire Watson",phone:"0435 111 222",email:""},
-  {id:4,name:"James Park",phone:"0401 222 333",email:""},
-  {id:5,name:"Emma Brown",phone:"0455 444 555",email:"emma.b@email.com"},
-  {id:6,name:"David Mitchell",phone:"0412 999 888",email:""},
-]);
-let expenses=lsg("pg_expenses2",[
-  {id:1,desc:"Shampoo & conditioner stock",amount:85,date:"2026-06-10"},
-  {id:2,desc:"Grooming scissors set",amount:120,date:"2026-06-05"},
-]);
+let bookings=lsg("pg_bookings2",[]);
+let pets=lsg("pg_pets2",[]);
+let owners=lsg("pg_owners2",[]);
+let expenses=lsg("pg_expenses2",[]);
 let prices=lsg("pg_prices2",{...DEF_PRICES});reattachPhotos();
 let durations=lsg("pg_dur2",{...DEF_DUR});
 let nextId=lsg("pg_nextId2",6);
@@ -1130,7 +1108,20 @@ function switchTab(t){
 }
 
 // Load data from Google Sheets on startup, always render
-loadFromSheets().then(()=>render()).catch(()=>render());
+// Show loading until Sheets responds
+document.body.style.opacity="0";
+loadFromSheets().then(loaded=>{
+  if(!loaded){
+    // Sheet failed - clear demo data and show empty app
+    bookings=[];pets=[];owners=[];expenses=[];
+  }
+  render();
+  document.body.style.opacity="1";
+}).catch(()=>{
+  bookings=[];pets=[];owners=[];expenses=[];
+  render();
+  document.body.style.opacity="1";
+});
 </script>
 
 <!-- Crop Modal -->
