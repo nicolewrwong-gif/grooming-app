@@ -1059,7 +1059,6 @@ function openPtModal(pet){
   ptEditing=pet||null;
   document.getElementById("pt-title").textContent=pet?"Edit pet profile":"New pet profile";
   document.getElementById("pt-name").value=pet?.name||"";
-  document.getElementById("pt-breed").value=pet?.breed||"";
   document.getElementById("pt-dob").value=pet?.dob||"";
   document.getElementById("pt-sex").value=pet?.sex||"Male";
   document.getElementById("pt-desexed").value=pet?(pet.desexed?"yes":"no"):"yes";
