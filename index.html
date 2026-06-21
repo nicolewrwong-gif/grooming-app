@@ -393,14 +393,28 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg8vy_t6w9f4xCxB7cJ
 let _saveTimer=null;
 // Tracks pending Drive photo uploads so we know when everything is truly synced
 let _pendingPhotoUploads=0;
-function photoUploadStarted(){_pendingPhotoUploads++;setSyncStatus("saving");}
+let _photoUploadError=false;
+let _sheetsWriteOk=false;
+
+function photoUploadStarted(){
+  _pendingPhotoUploads++;
+  _photoUploadError=false;
+  setSyncStatus("saving");
+}
 function photoUploadFinished(ok){
   _pendingPhotoUploads=Math.max(0,_pendingPhotoUploads-1);
-  if(!ok){setSyncStatus("error");return;}
-  // Only show "Saved" once both sheets write AND all photo uploads are done
-  if(_pendingPhotoUploads===0&&_sheetsWriteOk){setSyncStatus("saved");}
+  if(!ok){
+    _photoUploadError=true;
+    setSyncStatus("⚠️ Photo upload failed — data saved");
+    return;
+  }
+  checkAllSynced();
 }
-let _sheetsWriteOk=false;
+function checkAllSynced(){
+  if(_pendingPhotoUploads>0)return; // still waiting on photos
+  if(_photoUploadError){setSyncStatus("⚠️ Photo upload failed — data saved");return;}
+  if(_sheetsWriteOk){setSyncStatus("saved");}
+}
 
 async function pushToSheets(){
   _sheetsWriteOk=false;
@@ -423,8 +437,7 @@ async function pushToSheets(){
     }
     if(json.ok){
       _sheetsWriteOk=true;
-      // Only show "Saved" if no photo uploads are still in flight
-      if(_pendingPhotoUploads===0){setSyncStatus("saved");}
+      checkAllSynced();
       return true;
     }
     setSyncStatus("error");return false;
@@ -445,6 +458,7 @@ function save(){
   lss("pg_nextId2",nextId);lss("pg_nextPetId2",nextPetId);lss("pg_nextOId2",nextOId);lss("pg_nextExpId2",nextExpId);
   lss("pg_emptyProducts2",emptyProducts);
   _sheetsWriteOk=false;
+  _photoUploadError=false;
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{setSyncStatus("saving");pushToSheets();},700);
 }
@@ -870,11 +884,11 @@ async function bkPhotoSelected(input,slot){
         console.log("Photo uploaded to Drive:",json.url);
         photoUploadFinished(true);
       }else{
-        console.warn("Drive upload failed, keeping local copy:",json);
+        console.error("Drive upload failed. Response from Apps Script:",JSON.stringify(json));
         photoUploadFinished(false);
       }
     }catch(err){
-      console.warn("Drive upload error, keeping local copy:",err.message);
+      console.error("Drive upload fetch error (likely CORS or network):",err.message);
       photoUploadFinished(false);
     }
   }
