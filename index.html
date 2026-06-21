@@ -427,13 +427,22 @@ function reattachPhotos(){
 let bookings=lsg("pg_bookings2",[]);
 let pets=lsg("pg_pets2",[]);
 let owners=lsg("pg_owners2",[]);
-let expenses=lsg("pg_expenses2",[]);
+let expenses=lsg("pg_expenses2",[
+  {id:1,date:"2026-04-02",description:"Petway Curly Coat & Oodle Shampoo",amount:0,category:"supplies"},
+  {id:2,date:"2026-04-02",description:"Petway De-Shedding Shampoo",amount:0,category:"supplies"},
+  {id:3,date:"2026-04-02",description:"ProGroom Black Shampoo 125ml x 2",amount:0,category:"supplies"},
+  {id:4,date:"2026-04-02",description:"ProGroom Everyday Easy Rinse Conditioner 125ml",amount:0,category:"supplies"},
+  {id:5,date:"2026-04-02",description:"ProGroom Everyday Shampoo 125ml",amount:0,category:"supplies"},
+  {id:6,date:"2026-04-02",description:"ProGroom Hydrate Conditioner 125ml",amount:0,category:"supplies"},
+  {id:7,date:"2026-05-06",description:"Petway Everyday Pink Shampoo 250ml",amount:0,category:"supplies"},
+  {id:8,date:"2026-05-06",description:"Petway Gentle Protein Shampoo 250ml",amount:0,category:"supplies"}
+]);
 let prices=lsg("pg_prices2",{...DEF_PRICES});reattachPhotos();
 let durations=lsg("pg_dur2",{...DEF_DUR});
 let nextId=lsg("pg_nextId2",6);
 let nextPetId=lsg("pg_nextPetId2",6);
 let nextOId=lsg("pg_nextOId2",7);
-let nextExpId=lsg("pg_nextExpId2",3);
+let nextExpId=lsg("pg_nextExpId2",9);
 let emptyProducts=lsg("pg_emptyProducts2",[]);
 
 function petById(id){return pets.find(p=>p.id===id);}
