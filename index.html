@@ -391,7 +391,19 @@ const medColor=t=>({bg:"#FDECEA",text:"#E8534A"});
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg8vy_t6w9f4xCxB7cJz7xM8U0iiCzDED0UV2j-Ypu7OeFno8ROwCp0qVTjAyjHWHy/exec"; // ← paste your deployed Apps Script URL here
 
 let _saveTimer=null;
+// Tracks pending Drive photo uploads so we know when everything is truly synced
+let _pendingPhotoUploads=0;
+function photoUploadStarted(){_pendingPhotoUploads++;setSyncStatus("saving");}
+function photoUploadFinished(ok){
+  _pendingPhotoUploads=Math.max(0,_pendingPhotoUploads-1);
+  if(!ok){setSyncStatus("error");return;}
+  // Only show "Saved" once both sheets write AND all photo uploads are done
+  if(_pendingPhotoUploads===0&&_sheetsWriteOk){setSyncStatus("saved");}
+}
+let _sheetsWriteOk=false;
+
 async function pushToSheets(){
+  _sheetsWriteOk=false;
   try{
     const cleanBookings=bookings.map(b=>{const {beforePhoto,afterPhoto,...rest}=b;return rest;});
     const cleanPets=pets.map(p=>{const {photo,photos,...rest}=p;return rest;});
@@ -409,7 +421,12 @@ async function pushToSheets(){
       setSyncStatus("error");
       return false;
     }
-    if(json.ok){setSyncStatus("saved");return true;}
+    if(json.ok){
+      _sheetsWriteOk=true;
+      // Only show "Saved" if no photo uploads are still in flight
+      if(_pendingPhotoUploads===0){setSyncStatus("saved");}
+      return true;
+    }
     setSyncStatus("error");return false;
   }catch(e){
     console.error("pushToSheets fetch error:",e);
@@ -427,6 +444,7 @@ function save(){
   lss("pg_expenses2",expenses);lss("pg_prices2",prices);lss("pg_dur2",durations);
   lss("pg_nextId2",nextId);lss("pg_nextPetId2",nextPetId);lss("pg_nextOId2",nextOId);lss("pg_nextExpId2",nextExpId);
   lss("pg_emptyProducts2",emptyProducts);
+  _sheetsWriteOk=false;
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{setSyncStatus("saving");pushToSheets();},700);
 }
@@ -787,36 +805,79 @@ function renderFinances(){
 }
 
 let bkEditing=null,bkActiveAddons=[],bkActiveProducts=[],bkBeforePhoto=null,bkAfterPhoto=null;
+
+// Compress an image file to a JPEG data URL small enough for localStorage
+function compressPhoto(file,maxW,maxH,quality){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error("FileReader failed"));
+    reader.onload=e=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("Image load failed"));
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        const ratio=Math.min(maxW/w,maxH/h,1);
+        w=Math.round(w*ratio);h=Math.round(h*ratio);
+        const canvas=document.createElement("canvas");
+        canvas.width=w;canvas.height=h;
+        canvas.getContext("2d").drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL("image/jpeg",quality||0.82));
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function bkPhotoSelected(input,slot){
   const file=input.files[0];if(!file)return;
-  // Show local preview immediately
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    const base64Full=e.target.result;
-    const base64=base64Full.split(",")[1];
-    // Show preview straight away
-    if(slot==="before")bkBeforePhoto=base64Full;
-    else bkAfterPhoto=base64Full;
-    renderBkPhotos(slot,"uploading");
-    // Upload to Google Drive
+  // Step 1: compress locally immediately — fast, always works
+  if(slot==="before")bkBeforePhoto=null;else bkAfterPhoto=null;
+  renderBkPhotos(slot,"uploading");
+  let compressed;
+  try{
+    compressed=await compressPhoto(file,800,1000,0.82);
+  }catch(err){
+    console.error("Photo compress error:",err);
+    renderBkPhotos(slot,"error");
+    input.value="";return;
+  }
+  // Save compressed version locally straight away
+  if(slot==="before")bkBeforePhoto=compressed;
+  else bkAfterPhoto=compressed;
+  renderBkPhotos(slot,"done");
+  input.value="";
+  // Step 2: attempt Drive upload in background to get a persistent URL
+  if(SCRIPT_URL&&SCRIPT_URL!=="YOUR_APPS_SCRIPT_URL_HERE"){
+    photoUploadStarted();
     try{
-      const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"uploadPhoto",filename:slot+"_"+Date.now()+".jpg",mimeType:file.type||"image/jpeg",base64}),headers:{"Content-Type":"text/plain"}});
+      const base64=compressed.split(",")[1];
+      const res=await fetch(SCRIPT_URL,{method:"POST",
+        body:JSON.stringify({action:"uploadPhoto",filename:slot+"_"+Date.now()+".jpg",mimeType:"image/jpeg",base64}),
+        headers:{"Content-Type":"text/plain"}});
       const json=await res.json().catch(()=>({}));
       if(json.ok&&json.url){
+        // Replace local base64 with Drive URL — much smaller in storage
         if(slot==="before")bkBeforePhoto=json.url;
         else bkAfterPhoto=json.url;
         renderBkPhotos(slot,"done");
+        // Persist Drive URL into localStorage & in-memory booking (works for both new and edited bookings)
+        const targetId=bkEditing?bkEditing.id:(nextId-1);
+        const bookingPhotos=JSON.parse(localStorage.getItem("pg_bkPhotos2")||"{}");
+        bookingPhotos[targetId]={...(bookingPhotos[targetId]||{}),[slot+"Photo"]:json.url};
+        lss("pg_bkPhotos2",bookingPhotos);
+        bookings=bookings.map(b=>b.id===targetId?{...b,[slot+"Photo"]:json.url}:b);
+        console.log("Photo uploaded to Drive:",json.url);
+        photoUploadFinished(true);
       }else{
-        console.error("Photo upload failed:",json);
-        renderBkPhotos(slot,"error");
+        console.warn("Drive upload failed, keeping local copy:",json);
+        photoUploadFinished(false);
       }
     }catch(err){
-      console.error("Photo upload error:",err);
-      renderBkPhotos(slot,"error");
+      console.warn("Drive upload error, keeping local copy:",err.message);
+      photoUploadFinished(false);
     }
-  };
-  reader.readAsDataURL(file);
-  input.value="";
+  }
 }
 function bkRemovePhoto(slot){
   if(slot==="before")bkBeforePhoto=null;else bkAfterPhoto=null;
@@ -829,13 +890,18 @@ function renderBkPhotos(onlySlot,status){
     const prev=document.getElementById("bk-"+slot+"-preview");
     const actions=document.getElementById("bk-"+slot+"-actions");
     if(!prev)return;
-    if(data){
-      const overlay=status==="uploading"?`<div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;border-radius:8px">⏳ Uploading...</div>`:
-                    status==="error"?`<div style="position:absolute;inset:0;background:rgba(232,83,74,0.7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;border-radius:8px">⚠️ Upload failed</div>`:"";
+    if(status==="uploading"){
+      // Show spinner while compressing — no image data yet
+      prev.style.position="relative";
+      prev.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:6px;color:#888"><span style="font-size:20px">⏳</span><span style="font-size:11px">Processing...</span></div>`;
+      prev.style.border="1.5px dashed var(--border)";
+      if(actions)actions.style.display="none";
+    }else if(data){
+      const overlay=status==="error"?`<div style="position:absolute;inset:0;background:rgba(232,83,74,0.7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;border-radius:8px">⚠️ Failed</div>`:"";
       prev.style.position="relative";
       prev.innerHTML=`<img src="${data}" style="width:100%;height:100%;object-fit:cover"/>${overlay}`;
       prev.style.border="none";
-      if(actions)actions.style.display=status==="uploading"?"none":"flex";
+      if(actions)actions.style.display="flex";
     }else{
       prev.innerHTML=`<span style="font-size:20px">📷</span>Upload`;
       prev.style.border="1.5px dashed var(--border)";
@@ -869,9 +935,9 @@ function bkCropPhoto(slot){
     document.body.appendChild(overlay);
     // Drag to pan
     const vp=overlay.querySelector("#crop-viewport");
-    let dragging=false,startX,startY,panX=0,panY=0,curPanX=0,curPanY=0;
+    let dragging=false,startX,startY;
     vp.addEventListener("mousedown",e=>{dragging=true;startX=e.clientX-curPanX;startY=e.clientY-curPanY;vp.style.cursor="grabbing";});
-    window.addEventListener("mousemove",e=>{if(!dragging)return;panX=e.clientX-startX;panY=e.clientY-startY;curPanX=panX;curPanY=panY;cropUpdateTransform();});
+    window.addEventListener("mousemove",e=>{if(!dragging)return;curPanX=e.clientX-startX;curPanY=e.clientY-startY;cropUpdateTransform();});
     window.addEventListener("mouseup",()=>{dragging=false;vp.style.cursor="grab";});
     // Touch pan
     let t0;
@@ -899,8 +965,8 @@ function cropUpdateTransform(){
   const z=parseFloat(document.getElementById("crop-zoom").value);
   img.style.transform=`translate(${curPanX}px,${curPanY}px) scale(${z})`;
 }
-function cropZoomChange(){cropUpdateTransform();}
 let curPanX=0,curPanY=0;
+function cropZoomChange(){cropUpdateTransform();}
 function closeCropOverlay(){document.getElementById("crop-overlay").style.display="none";}
 function applyCrop(){
   const img=document.getElementById("crop-img");
