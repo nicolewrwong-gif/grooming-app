@@ -197,10 +197,29 @@ tr:hover td{background:#fafbfc}
 </div>
 <div class="grid2">
   <div><label class="lbl">Pet name</label><input type="text" id="pt-name" placeholder="Buddy"/></div>
-  <div><label class="lbl">Breed</label><input type="text" id="pt-breed" placeholder="Golden Retriever"/></div>
+  <div>
+    <label class="lbl">Breed</label>
+    <div id="pt-breed-tags" style="display:flex;flex-wrap:wrap;gap:4px;min-height:24px;margin-bottom:4px"></div>
+    <select id="pt-breed-select" onchange="ptAddBreed(this.value)" style="width:100%">
+      <option value="">Select breed...</option>
+    </select>
+  </div>
 </div>
 <div class="grid2">
-  <div><label class="lbl">Date of birth</label><input type="date" id="pt-dob"/></div>
+  <div>
+    <label class="lbl">Date of birth</label>
+    <input type="date" id="pt-dob" oninput="ptDobChanged()"/>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+      <input type="checkbox" id="pt-approx-age" onchange="ptToggleApproxAge()" style="margin:0"/>
+      <label for="pt-approx-age" style="font-size:11px;color:var(--text-muted);cursor:pointer">Approx. age</label>
+    </div>
+    <div id="pt-approx-age-fields" style="display:none;gap:6px;margin-top:6px;align-items:center">
+      <input type="number" id="pt-age-years" min="0" max="30" placeholder="yrs" style="width:60px"/>
+      <span style="font-size:12px;color:var(--text-muted)">y</span>
+      <input type="number" id="pt-age-months" min="0" max="11" placeholder="mo" style="width:60px"/>
+      <span style="font-size:12px;color:var(--text-muted)">mo</span>
+    </div>
+  </div>
   <div><label class="lbl">Sex</label><select id="pt-sex"><option>Male</option><option>Female</option></select></div>
   <div><label class="lbl">Desexed</label><select id="pt-desexed"><option value="yes">Yes</option><option value="no">No</option></select></div>
   <div><label class="lbl">Size</label><select id="pt-size"><option>Mini</option><option>Small</option><option selected>Medium</option><option>Large</option><option>Extra large</option></select></div>
@@ -209,7 +228,7 @@ tr:hover td{background:#fafbfc}
 <div class="mb10"><label class="lbl" style="color:#E8534A;font-weight:600">⚠️ Special handling</label><div id="pt-special" class="multi-toggle"></div><input type="text" id="pt-special-custom" placeholder="e.g. owner must stay in waiting area" style="margin-top:6px"/></div>
 <div class="mb10"><label class="lbl">Behaviour traits</label><div id="pt-behaviour" class="multi-toggle"></div></div>
 <div class="mb10"><label class="lbl">Behaviour notes</label><textarea id="pt-behavnote" rows="2" placeholder="e.g. settles after first 10 mins"></textarea></div>
-<div class="mb10"><label class="lbl">Medical conditions</label><div id="pt-medical" class="multi-toggle"></div></div>
+<div class="mb10"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><label class="lbl" style="margin:0;white-space:nowrap">Medical conditions</label><div id="pt-medical" class="multi-toggle" style="display:inline-flex;flex-wrap:wrap;gap:4px"></div></div></div>
 <div class="mb10"><label class="lbl">Medical notes</label><textarea id="pt-mednotes" rows="2" placeholder="e.g. sensitive skin"></textarea></div>
 <div class="mb10"><label class="lbl">Preferred style</label><input type="text" id="pt-prefstyle" placeholder="e.g. teddy bear trim, summer cut..."/></div>
 <div class="mb10"><label class="lbl">Linked owners</label><div id="pt-owners" class="multi-toggle"></div></div>
@@ -280,6 +299,72 @@ const BEH_DUR_TRAITS=["Anxious","Senior / fragile","Separation anxiety","Fear of
 const SIZE_MULT={"Mini":1,"Small":1,"Medium":1,"Large":1.2,"Extra large":1.4};
 const SIZE_DUR={"Mini":-10,"Small":0,"Medium":0,"Large":15,"Extra large":30};
 const BEHAVIOUR_TRAITS=["Food motivated","Friendly","Good with Bruce","Good with handling","Barks/howls","Eats air","Sensitive feet","Sitter","Table active","Anxious","Fear of clippers","Head shy","Noise sensitive","Senior / fragile","Separation anxiety","Bite risk","Escape risk","Flight risk","Resists handling","Requires breaks","Requires multiple sessions","Requires muzzle"];
+const BREEDS=[
+  "Australian Shepherd","Australian Terrier","Beagle","Beagle X","Border Collie","Border Terrier",
+  "Boxer","Bull Arab","Bulldog","Bull Terrier","Cavalier","Chihuahua","Chow Chow","Cocker Spaniel",
+  "Dachshund","Dalmatian","Dobermann","French Bulldog","German Shepherd","Golden Retriever",
+  "Great Dane","Greyhour","Husky","Jack Russell","Kelpie","Kelpie X","Labrador","Lab X",
+  "Maltese","Maremma","Miniature Schnauzer","Mixed breed","Pomeranian","Poodle","Pug",
+  "Retriever X","Rottweiler","Samoyed","Shih Tzu","Springer Spaniel","Spoodle","Staffy","Staffy X",
+  "Vizsla","Weimaraner","Whippet","Yorkshire Terrier",
+  "Bernedoodle","Bordoodle","Cavoodle","Cockerpoo","Groodle","Havapoo","Labradoodle",
+  "Maltipoo","Moodle","Poochon","Pugapoo","Schnoodle","Shihpoo","Toy Cavoodle",
+  "Toy Groodle","Toy Labradoodle","Westiepoo"
+].sort((a,b)=>a.localeCompare(b));
+
+let ptSelectedBreeds=[];
+
+function ptInitBreeds(){
+  const sel=document.getElementById("pt-breed-select");
+  if(!sel)return;
+  sel.innerHTML='<option value="">Select breed...</option>';
+  BREEDS.forEach(b=>{
+    if(!ptSelectedBreeds.includes(b)){
+      const o=document.createElement("option");
+      o.value=b;o.textContent=b;sel.appendChild(o);
+    }
+  });
+}
+
+function ptAddBreed(val){
+  if(!val||ptSelectedBreeds.includes(val))return;
+  ptSelectedBreeds.push(val);
+  ptRenderBreedTags();ptInitBreeds();
+  document.getElementById("pt-breed-select").value="";
+}
+
+function ptRemoveBreed(idx){
+  ptSelectedBreeds.splice(idx,1);
+  ptRenderBreedTags();ptInitBreeds();
+}
+
+function ptRenderBreedTags(){
+  const el=document.getElementById("pt-breed-tags");
+  if(!el)return;
+  el.innerHTML=ptSelectedBreeds.map((b,i)=>`<span style="display:inline-flex;align-items:center;gap:3px;background:#E8F3FF;color:#185FA5;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:500">${b}<span onclick="ptRemoveBreed(${i})" style="cursor:pointer;font-size:14px;line-height:1;opacity:0.6">×</span></span>`).join("");
+}
+
+function ptGetBreedString(){return ptSelectedBreeds.join(" X ");}
+
+function ptDobChanged(){
+  document.getElementById("pt-approx-age").checked=false;
+  document.getElementById("pt-approx-age-fields").style.display="none";
+}
+
+function ptToggleApproxAge(){
+  const checked=document.getElementById("pt-approx-age").checked;
+  document.getElementById("pt-approx-age-fields").style.display=checked?"flex":"none";
+  if(checked)document.getElementById("pt-dob").value="";
+}
+
+function ptApproxDob(){
+  const y=parseInt(document.getElementById("pt-age-years").value)||0;
+  const m=parseInt(document.getElementById("pt-age-months").value)||0;
+  const now=new Date();
+  now.setFullYear(now.getFullYear()-y);now.setMonth(now.getMonth()-m);
+  return now.toISOString().slice(0,10);
+}
+
 const MEDICAL_TAGS=["Arthritis","Blind","Vision impaired","Heart condition","Diabetes","Allergies","Hip dysplasia","Recent surgery","Ear infection","Cancer","Kidney disease","Thyroid condition","Hearing Impaired","Deaf","Seizure History"];
 
 const COAT_TYPES=["Curly Coat","Silky Coat","Wire Coat","Double Coat","Smooth Coat","Wavy Coat","Wool Coat","Medium Coat","Long Coat"];
@@ -303,7 +388,7 @@ const sortBehTraits=arr=>[...arr].sort((a,b)=>behColor(a).rank-behColor(b).rank|
 const medColor=t=>({bg:"#FDECEA",text:"#E8534A"});
 
 // ── GOOGLE SHEETS SYNC ─────────────────────────────────────────────────
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg8vy_t6w9f4xCxB7cJz7xM8U0iiCzDED0UV2j-Ypu7OeFno8ROwCp0qVTjAyjHWHy/exec"; // ← paste your deployed Apps Script URL here
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCzLf6yXK5KjzHEmobU0qaGkuPYE1XdJDh7XR0UJISAKCxVKmt4NK-b_wqFdGZbPf2/exec"; // ← paste your deployed Apps Script URL here
 
 let _saveTimer=null;
 async function pushToSheets(){
@@ -992,6 +1077,23 @@ function openPtModal(pet){
   ptActiveOwners=[...(pet?.ownerIds||[])];
   ptPhotoData=pet?.photo||null;
   document.getElementById("pt-special-custom").value=pet?.customSpecialHandling||"";
+  // Load breeds
+  ptSelectedBreeds=pet?.breed?pet.breed.split(" X ").map(s=>s.trim()).filter(Boolean):[];
+  ptRenderBreedTags();ptInitBreeds();
+  // Load approx age
+  const isApprox=pet?.approxAge||false;
+  document.getElementById("pt-approx-age").checked=isApprox;
+  document.getElementById("pt-approx-age-fields").style.display=isApprox?"flex":"none";
+  if(isApprox&&pet?.dob){
+    const d=new Date(pet.dob);const now=new Date();
+    let yrs=now.getFullYear()-d.getFullYear();let mos=now.getMonth()-d.getMonth();
+    if(mos<0){yrs--;mos+=12;}
+    document.getElementById("pt-age-years").value=yrs;
+    document.getElementById("pt-age-months").value=mos;
+  }else{
+    document.getElementById("pt-age-years").value="";
+    document.getElementById("pt-age-months").value="";
+  }
   renderPtPhoto();
   renderPtToggles();
   document.getElementById("modal-pet").classList.add("open");
@@ -1022,10 +1124,12 @@ function ptOwnToggle(i){const oid=owners[i]?.id;if(!oid)return;ptActiveOwners=pt
 function closePtModal(){document.getElementById("modal-pet").classList.remove("open");ptEditing=null;}
 function savePtModal(){
   const name=document.getElementById("pt-name").value.trim();
-  const breed=document.getElementById("pt-breed").value.trim();
-  if(!name||!breed){alert("Please enter name and breed.");return;}
+  const breed=ptGetBreedString();
+  if(!name||!breed){alert("Please enter name and at least one breed.");return;}
+  const approxAge=document.getElementById("pt-approx-age").checked;
+  const dob=approxAge?ptApproxDob():document.getElementById("pt-dob").value;
   if(!ptActiveOwners.length){alert("Please link at least one owner.");return;}
-  const obj={name,breed,dob:document.getElementById("pt-dob").value,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim()};
+  const obj={name,breed,dob:dob,approxAge:approxAge,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim()};
   if(ptEditing){pets=pets.map(p=>p.id===ptEditing.id?{...p,...obj}:p);}else{pets.push({id:nextPetId++,...obj});}
   save();closePtModal();render();
 }
