@@ -137,7 +137,7 @@ tr:hover td{background:#fafbfc}
   <div><label class="lbl">Time</label><input type="time" id="bk-time"/></div>
 </div>
 <div class="mb10"><label class="lbl">Status</label><select id="bk-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></div>
-<div class="mb10"><label class="lbl">Notes</label><textarea id="bk-notes" rows="2" placeholder="e.g. sensitive skin"></textarea></div>
+<div class="mb10"><label class="lbl">Notes</label><textarea id="bk-notes" rows="2" placeholder="e.g. check ear infection"></textarea></div>
 <div class="mb10">
   <label class="lbl">Products used</label>
   <div id="bk-products" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:2px"></div>
@@ -206,12 +206,12 @@ tr:hover td{background:#fafbfc}
   <div><label class="lbl">Size</label><select id="pt-size"><option>Mini</option><option>Small</option><option selected>Medium</option><option>Large</option><option>Extra large</option></select></div>
 </div>
 <div class="mb10"><label class="lbl">Coat type(s)</label><div id="pt-coats" class="multi-toggle"></div></div>
-<div class="mb10"><label class="lbl" style="color:#E8534A;font-weight:600">⚠️ Special handling</label><div id="pt-special" class="multi-toggle"></div><input type="text" id="pt-special-custom" placeholder="Custom note, e.g. only groomer Sarah" style="margin-top:6px"/></div>
+<div class="mb10"><label class="lbl" style="color:#E8534A;font-weight:600">⚠️ Special handling</label><div id="pt-special" class="multi-toggle"></div><input type="text" id="pt-special-custom" placeholder="e.g. owner must stay in waiting area" style="margin-top:6px"/></div>
 <div class="mb10"><label class="lbl">Behaviour traits</label><div id="pt-behaviour" class="multi-toggle"></div></div>
+<div class="mb10"><label class="lbl">Behaviour notes</label><textarea id="pt-behavnote" rows="2" placeholder="e.g. settles after first 10 mins"></textarea></div>
 <div class="mb10"><label class="lbl">Medical conditions</label><div id="pt-medical" class="multi-toggle"></div></div>
-<div class="mb10"><label class="lbl">Medical notes</label><textarea id="pt-mednotes" rows="2" placeholder="Handling requirements..."></textarea></div>
+<div class="mb10"><label class="lbl">Medical notes</label><textarea id="pt-mednotes" rows="2" placeholder="e.g. sensitive skin"></textarea></div>
 <div class="mb10"><label class="lbl">Preferred style</label><input type="text" id="pt-prefstyle" placeholder="e.g. Teddy bear trim, summer cut..."/></div>
-<div class="mb10"><label class="lbl">Note for next visit</label><textarea id="pt-lastnote" rows="2" placeholder="e.g. check ear infection"></textarea></div>
 <div class="mb10"><label class="lbl">Linked owners</label><div id="pt-owners" class="multi-toggle"></div></div>
 <div class="row-end"><button onclick="closePtModal()">Cancel</button><button class="primary" onclick="savePtModal()">Save pet profile</button></div>
 </div>
@@ -976,7 +976,7 @@ function openPtModal(pet){
   document.getElementById("pt-size").value=pet?.size||"Medium";
   document.getElementById("pt-mednotes").value=pet?.medicalNotes||"";
   document.getElementById("pt-prefstyle").value=pet?.preferredStyle||"";
-  document.getElementById("pt-lastnote").value=pet?.lastNote||"";
+  document.getElementById("pt-behavnote").value=pet?.lastNote||"";
   ptActiveBehaviour=[...(pet?.behaviour||[])];
   ptActiveCoats=[...(pet?.coatTypes||[])];
   ptActiveMedical=[...(pet?.medicalTags||[])];
@@ -1016,7 +1016,7 @@ function savePtModal(){
   const breed=document.getElementById("pt-breed").value.trim();
   if(!name||!breed){alert("Please enter name and breed.");return;}
   if(!ptActiveOwners.length){alert("Please link at least one owner.");return;}
-  const obj={name,breed,dob:document.getElementById("pt-dob").value,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-lastnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim()};
+  const obj={name,breed,dob:document.getElementById("pt-dob").value,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim()};
   if(ptEditing){pets=pets.map(p=>p.id===ptEditing.id?{...p,...obj}:p);}else{pets.push({id:nextPetId++,...obj});}
   save();closePtModal();render();
 }
