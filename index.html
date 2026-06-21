@@ -393,11 +393,11 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg8vy_t6w9f4xCxB7cJ
 let _saveTimer=null;
 async function pushToSheets(){
   try{
-    // Strip base64 photos before sending — too large for Sheets cells
     const cleanBookings=bookings.map(b=>{const {beforePhoto,afterPhoto,...rest}=b;return rest;});
     const cleanPets=pets.map(p=>{const {photo,photos,...rest}=p;return rest;});
-    const payload={action:"write",data:{Bookings:cleanBookings,Pets:cleanPets,Owners:owners,Expenses:expenses,Prices:prices,Durations:durations,Meta:{nextId,nextPetId,nextOId,nextExpId}}};
-    const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload)});
+    const data={Bookings:cleanBookings,Pets:cleanPets,Owners:owners,Expenses:expenses,Prices:prices,Durations:durations,Meta:{nextId,nextPetId,nextOId,nextExpId}};
+    const url=SCRIPT_URL+"?action=write&data="+encodeURIComponent(JSON.stringify(data));
+    const res=await fetch(url);
     const text=await res.text();
     let json={};
     try{json=JSON.parse(text);}catch(e){
@@ -796,12 +796,8 @@ async function bkPhotoSelected(input,slot){
     renderBkPhotos(slot,"uploading");
     // Upload to Google Drive
     try{
-      const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({
-        action:"uploadPhoto",
-        filename:slot+"_"+Date.now()+".jpg",
-        mimeType:file.type||"image/jpeg",
-        base64
-      })});
+      const url=SCRIPT_URL+"?action=uploadPhoto&filename="+encodeURIComponent(slot+"_"+Date.now()+".jpg")+"&mimeType="+encodeURIComponent(file.type||"image/jpeg")+"&base64="+encodeURIComponent(base64);
+      const res=await fetch(url);
       const json=await res.json().catch(()=>({}));
       if(json.ok&&json.url){
         if(slot==="before")bkBeforePhoto=json.url;
