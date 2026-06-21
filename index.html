@@ -395,9 +395,8 @@ async function pushToSheets(){
   try{
     const cleanBookings=bookings.map(b=>{const {beforePhoto,afterPhoto,...rest}=b;return rest;});
     const cleanPets=pets.map(p=>{const {photo,photos,...rest}=p;return rest;});
-    const data={Bookings:cleanBookings,Pets:cleanPets,Owners:owners,Expenses:expenses,Prices:prices,Durations:durations,Meta:{nextId,nextPetId,nextOId,nextExpId}};
-    const url=SCRIPT_URL+"?action=write&data="+encodeURIComponent(JSON.stringify(data));
-    const res=await fetch(url);
+    const data={action:"write",data:{Bookings:cleanBookings,Pets:cleanPets,Owners:owners,Expenses:expenses,Prices:prices,Durations:durations,Meta:{nextId,nextPetId,nextOId,nextExpId}}};
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(data),headers:{"Content-Type":"text/plain"}});
     const text=await res.text();
     let json={};
     try{json=JSON.parse(text);}catch(e){
@@ -449,7 +448,7 @@ async function loadFromSheets(){
   if(SCRIPT_URL==="YOUR_APPS_SCRIPT_URL_HERE"){setSyncStatus("⚠️ Paste your Apps Script URL to enable sync");return false;}
   setSyncStatus("⏳ Loading...");
   try{
-    const res=await fetch(SCRIPT_URL+"?action=read");
+    const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"read"}),headers:{"Content-Type":"text/plain"}});
     const text=await res.text();
     let json;
     try{json=JSON.parse(text);}catch(e){
@@ -463,7 +462,7 @@ async function loadFromSheets(){
       if(d.Bookings)bookings=d.Bookings;
       if(d.Pets)pets=d.Pets;
       if(d.Owners)owners=d.Owners;
-      if(d.Expenses)expenses=d.Expenses;
+      if(d.Expenses&&d.Expenses.length)expenses=d.Expenses;
       if(d.Prices)prices=d.Prices;
       if(d.Durations)durations=d.Durations;
       if(d.Meta){nextId=d.Meta.nextId||nextId;nextPetId=d.Meta.nextPetId||nextPetId;nextOId=d.Meta.nextOId||nextOId;nextExpId=d.Meta.nextExpId||nextExpId;}
@@ -477,12 +476,14 @@ async function loadFromSheets(){
       setSyncStatus("✓ Loaded");setTimeout(()=>setSyncStatus(""),2000);
       render();return true;
     }else{
-      setSyncStatus("⚠️ Load failed");
-      alert("Sheets responded but returned no data. Response:\n"+JSON.stringify(json).slice(0,200));
+      setSyncStatus("⚠️ Sheets returned no data");
+      console.warn("Sheets responded but returned no data:",json);
+      // Don't alert — fall back to localStorage silently
     }
   }catch(e){
-    setSyncStatus("⚠️ Could not load");
-    alert("Load error: "+e.message);
+    setSyncStatus("⚠️ Could not reach Sheets");
+    console.error("Load error:",e.message);
+    // Don't alert — fall back to localStorage silently
   }
   return false;
 }
@@ -799,8 +800,7 @@ async function bkPhotoSelected(input,slot){
     renderBkPhotos(slot,"uploading");
     // Upload to Google Drive
     try{
-      const url=SCRIPT_URL+"?action=uploadPhoto&filename="+encodeURIComponent(slot+"_"+Date.now()+".jpg")+"&mimeType="+encodeURIComponent(file.type||"image/jpeg")+"&base64="+encodeURIComponent(base64);
-      const res=await fetch(url);
+      const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"uploadPhoto",filename:slot+"_"+Date.now()+".jpg",mimeType:file.type||"image/jpeg",base64}),headers:{"Content-Type":"text/plain"}});
       const json=await res.json().catch(()=>({}));
       if(json.ok&&json.url){
         if(slot==="before")bkBeforePhoto=json.url;
@@ -1218,18 +1218,21 @@ function switchTab(t){
   render();
 }
 
-// Load data from Google Sheets on startup, always render
-// Show loading until Sheets responds
+// Load data from Google Sheets on startup, fall back to localStorage if unavailable
 document.body.style.opacity="0";
 loadFromSheets().then(loaded=>{
   if(!loaded){
-    // Sheet failed - clear demo data and show empty app
-    bookings=[];pets=[];owners=[];expenses=[];
+    // Sheet failed — keep whatever is already in memory from localStorage (loaded at top of script)
+    // Don't wipe local data; just render with what we have
+    setSyncStatus("⚠️ Loaded from local cache");
+    setTimeout(()=>setSyncStatus(""),3000);
   }
   render();
   document.body.style.opacity="1";
 }).catch(()=>{
-  bookings=[];pets=[];owners=[];expenses=[];
+  // Same: don't wipe data on error, just render local
+  setSyncStatus("⚠️ Loaded from local cache");
+  setTimeout(()=>setSyncStatus(""),3000);
   render();
   document.body.style.opacity="1";
 });
