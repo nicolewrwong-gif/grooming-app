@@ -990,10 +990,10 @@ function bkCropPhoto(slot){
   const data=slot==="before"?bkBeforePhoto:bkAfterPhoto;
   if(!data||data.startsWith("http"))return; // can only crop local images
   bkCropSlot=slot;
-  let overlay=document.getElementById("crop-overlay");
+  let overlay=document.getElementById("bk-crop-overlay");
   if(!overlay){
     overlay=document.createElement("div");
-    overlay.id="crop-overlay";
+    overlay.id="bk-crop-overlay";
     overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px";
     overlay.innerHTML=`
       <div style="color:#fff;font-size:13px;font-weight:500">Drag to reposition · Scroll to zoom</div>
@@ -1047,7 +1047,7 @@ function bkCropZoomChange(){
   _bkCropPanY=BK_CROP_H/2-(_bkCropZoom/prev)*(BK_CROP_H/2-_bkCropPanY);
   bkCropClamp();bkCropApplyTransform();
 }
-function closeBkCropOverlay(){document.getElementById("crop-overlay").style.display="none";}
+function closeBkCropOverlay(){document.getElementById("bk-crop-overlay").style.display="none";}
 function applyBkCrop(){
   const canvas=document.createElement("canvas");
   canvas.width=400;canvas.height=500;
