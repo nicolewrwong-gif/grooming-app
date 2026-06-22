@@ -561,8 +561,6 @@ function reattachPhotos(){
     return{...p,photo:url};
   });
   lss("pg_petPhotos2",petPhotos);
-  const petPhotos=lsg("pg_petPhotos2",{});
-  pets=pets.map(p=>({...p,photo:petPhotos[p.id]||null}));
 }
 let bookings=lsg("pg_bookings2",[]);
 let pets=lsg("pg_pets2",[]);
@@ -628,8 +626,6 @@ let confirmCb=null;
 
 function badge(status){const s=BADGE_STYLE[status]||BADGE_STYLE.pending;return`<span class="badge" style="background:${s.bg};color:${s.color}">${status.charAt(0).toUpperCase()+status.slice(1)}</span>`;}
 function tag(text,bg,color){return`<span class="tag" style="background:${bg};color:${color}">${text}</span>`;}
-function medTag(text,bg,color){return`<span class="tag" style="background:${bg};color:${color};font-weight:500">${text}</span>`;}
-function medTag(text,bg,color){return`<span class="tag" style="background:${bg};color:${color};font-weight:500">${text}</span>`;}
 function medTag(text,bg,color){return`<span class="tag" style="background:${bg};color:${color};font-weight:500">${text}</span>`;}
 function avatar(name,size=32){const i=name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();return`<div style="width:${size}px;height:${size}px;border-radius:50%;background:#EEEDFE;color:#534AB7;display:inline-flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.38)}px;font-weight:500;flex-shrink:0">${i}</div>`;}
 function specialHandlingTags(pet){if(!pet)return[];return[...(pet.medicalTags||[]),...(pet.behaviour||[])].filter(t=>SPECIAL_HANDLING_TRAITS.includes(t));}
@@ -880,6 +876,9 @@ function compressPhoto(file,maxW,maxH,quality){
 
 async function bkPhotoSelected(input,slot){
   const file=input.files[0];if(!file)return;
+  // Delete the old Drive photo if it's being replaced
+  const oldPhoto=slot==="before"?bkBeforePhoto:bkAfterPhoto;
+  deletePhotoFromDrive(oldPhoto);
   // Step 1: compress locally immediately — fast, always works
   if(slot==="before")bkBeforePhoto=null;else bkAfterPhoto=null;
   renderBkPhotos(slot,"uploading");
@@ -938,7 +937,20 @@ async function bkPhotoSelected(input,slot){
     else _pendingAfterUpload=uploadPromise;
   }
 }
+function deletePhotoFromDrive(url){
+  if(!url||!url.startsWith("http"))return; // only Drive URLs, not local base64
+  if(!SCRIPT_URL||SCRIPT_URL==="YOUR_APPS_SCRIPT_URL_HERE")return;
+  fetch(SCRIPT_URL,{method:"POST",
+    body:JSON.stringify({action:"deletePhoto",url}),
+    headers:{"Content-Type":"text/plain"}
+  }).then(r=>r.json()).then(j=>{
+    if(j.ok)console.log("Drive photo deleted:",url);
+    else console.warn("Drive photo delete failed:",j);
+  }).catch(e=>console.warn("Drive photo delete error:",e.message));
+}
 function bkRemovePhoto(slot){
+  const old=slot==="before"?bkBeforePhoto:bkAfterPhoto;
+  deletePhotoFromDrive(old);
   if(slot==="before")bkBeforePhoto=null;else bkAfterPhoto=null;
   renderBkPhotos();
 }
@@ -1191,7 +1203,7 @@ function ptPhotoSelected(input){
   reader.onload=e=>{openCropModal(e.target.result);};
   reader.readAsDataURL(file);
 }
-function ptRemovePhoto(){ptPhotoData=null;renderPtPhoto();}
+function ptRemovePhoto(){deletePhotoFromDrive(ptPhotoData);ptPhotoData=null;renderPtPhoto();}
 function renderPtPhoto(){
   const preview=document.getElementById("pt-photo-preview");
   const removeBtn=document.getElementById("pt-photo-remove");
@@ -1512,7 +1524,9 @@ function applyCrop(){
   if(_cropRot){ctx.translate(OUT/2,OUT/2);ctx.rotate(_cropRot*Math.PI/180);ctx.translate(-OUT/2,-OUT/2);}
   ctx.drawImage(ci,Math.max(0,sx),Math.max(0,sy),Math.min(sw,_imgW),Math.min(sh,_imgH),0,0,OUT,OUT);
   ctx.restore();
+  const _oldPetPhoto=ptPhotoData;
   ptPhotoData=canvas.toDataURL("image/jpeg",0.92);
+  deletePhotoFromDrive(_oldPetPhoto);
   renderPtPhoto();
   closeCropModal();
   // Upload pet photo to Drive in background so it syncs across devices
