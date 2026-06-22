@@ -834,6 +834,7 @@ function renderFinances(){
 }
 
 let bkEditing=null,bkActiveAddons=[],bkActiveProducts=[],bkBeforePhoto=null,bkAfterPhoto=null;
+let _pendingBeforeUpload=null,_pendingAfterUpload=null; // Promises that resolve to Drive URL or null
 
 // Compress an image file to a JPEG data URL small enough for localStorage
 function compressPhoto(file,maxW,maxH,quality){
@@ -879,35 +880,43 @@ async function bkPhotoSelected(input,slot){
   // Step 2: attempt Drive upload in background to get a persistent URL
   if(SCRIPT_URL&&SCRIPT_URL!=="YOUR_APPS_SCRIPT_URL_HERE"){
     photoUploadStarted();
-    try{
-      const base64=compressed.split(",")[1];
-      const res=await fetch(SCRIPT_URL,{method:"POST",
-        body:JSON.stringify({action:"uploadPhoto",filename:slot+"_"+Date.now()+".jpg",mimeType:"image/jpeg",base64}),
-        headers:{"Content-Type":"text/plain"}});
-      const json=await res.json().catch(()=>({}));
-      if(json.ok&&json.url){
-        // Replace local base64 with Drive URL — much smaller in storage
-        if(slot==="before")bkBeforePhoto=json.url;
-        else bkAfterPhoto=json.url;
-        renderBkPhotos(slot,"done");
-        // Persist Drive URL into localStorage & in-memory booking (works for both new and edited bookings)
-        const targetId=bkEditing?bkEditing.id:(nextId-1);
-        const bookingPhotos=JSON.parse(localStorage.getItem("pg_bkPhotos2")||"{}");
-        bookingPhotos[targetId]={...(bookingPhotos[targetId]||{}),[slot+"Photo"]:json.url};
-        lss("pg_bkPhotos2",bookingPhotos);
-        bookings=bookings.map(b=>b.id===targetId?{...b,[slot+"Photo"]:json.url}:b);
-        console.log("Photo uploaded to Drive:",json.url);
-        // Push to Sheets now so the Drive URL syncs to other devices
-        pushToSheets();
-        photoUploadFinished(true);
-      }else{
-        console.error("Drive upload failed. Response from Apps Script:",JSON.stringify(json));
+    // Store the upload promise so saveBkModal can await it for new bookings
+    const uploadPromise=(async()=>{
+      try{
+        const base64=compressed.split(",")[1];
+        const res=await fetch(SCRIPT_URL,{method:"POST",
+          body:JSON.stringify({action:"uploadPhoto",filename:slot+"_"+Date.now()+".jpg",mimeType:"image/jpeg",base64}),
+          headers:{"Content-Type":"text/plain"}});
+        const json=await res.json().catch(()=>({}));
+        if(json.ok&&json.url){
+          // Replace local base64 with Drive URL
+          if(slot==="before")bkBeforePhoto=json.url;
+          else bkAfterPhoto=json.url;
+          renderBkPhotos(slot,"done");
+          console.log("Photo uploaded to Drive:",json.url);
+          // If editing an existing booking, update it now
+          if(bkEditing){
+            bookings=bookings.map(b=>b.id===bkEditing.id?{...b,[slot+"Photo"]:json.url}:b);
+            const bookingPhotos=JSON.parse(localStorage.getItem("pg_bkPhotos2")||"{}");
+            bookingPhotos[bkEditing.id]={...(bookingPhotos[bkEditing.id]||{}),[slot+"Photo"]:json.url};
+            lss("pg_bkPhotos2",bookingPhotos);
+            save();
+          }
+          photoUploadFinished(true);
+          return json.url;
+        }else{
+          console.error("Drive upload failed:",JSON.stringify(json));
+          photoUploadFinished(false);
+          return null;
+        }
+      }catch(err){
+        console.error("Drive upload fetch error:",err.message);
         photoUploadFinished(false);
+        return null;
       }
-    }catch(err){
-      console.error("Drive upload fetch error (likely CORS or network):",err.message);
-      photoUploadFinished(false);
-    }
+    })();
+    if(slot==="before")_pendingBeforeUpload=uploadPromise;
+    else _pendingAfterUpload=uploadPromise;
   }
 }
 function bkRemovePhoto(slot){
@@ -1013,7 +1022,7 @@ function applyCrop(){
   renderBkPhotos();
 }
 function openBkModal(b){
-  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;
+  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;
   document.getElementById("bk-title").textContent=b?"Edit booking":"New booking";
   // Populate all pets (sorted alphabetically)
   const petSel=document.getElementById("bk-pet");
@@ -1119,11 +1128,19 @@ function updateBkPrice(){
   document.getElementById("bk-price-box").innerHTML=html;
 }
 function closeBkModal(){document.getElementById("modal-booking").classList.remove("open");bkEditing=null;bkActiveAddons=[];bkActiveProducts=[];}
-function saveBkModal(){
+async function saveBkModal(){
   const ownerId=Number(document.getElementById("bk-owner").value);
   const petId=Number(document.getElementById("bk-pet").value);
   if(!petId){alert("Please select a pet.");return;}
   if(!ownerId){alert("The selected pet has no linked owner. Please link an owner to the pet first.");return;}
+  // Wait for any in-flight Drive uploads to finish so we save the URL not base64
+  if(_pendingBeforeUpload||_pendingAfterUpload){
+    setSyncStatus("saving");
+    const [before,after]=await Promise.all([_pendingBeforeUpload||Promise.resolve(null),_pendingAfterUpload||Promise.resolve(null)]);
+    if(before)bkBeforePhoto=before;
+    if(after)bkAfterPhoto=after;
+    _pendingBeforeUpload=null;_pendingAfterUpload=null;
+  }
   const customRaw=document.getElementById("bk-custom").value;
   const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   if(bkEditing){bookings=bookings.map(b=>b.id===bkEditing.id?{...b,...obj}:b);}else{bookings.push({id:nextId++,...obj});}
