@@ -897,6 +897,8 @@ async function bkPhotoSelected(input,slot){
         lss("pg_bkPhotos2",bookingPhotos);
         bookings=bookings.map(b=>b.id===targetId?{...b,[slot+"Photo"]:json.url}:b);
         console.log("Photo uploaded to Drive:",json.url);
+        // Push to Sheets now so the Drive URL syncs to other devices
+        pushToSheets();
         photoUploadFinished(true);
       }else{
         console.error("Drive upload failed. Response from Apps Script:",JSON.stringify(json));
