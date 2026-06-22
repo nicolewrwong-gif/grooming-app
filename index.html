@@ -137,7 +137,8 @@ tr:hover td{background:#fafbfc}
   <div><label class="lbl">Time</label><input type="time" id="bk-time"/></div>
 </div>
 <div class="mb10"><label class="lbl">Status</label><select id="bk-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></div>
-<div class="mb10"><label class="lbl">Notes</label><textarea id="bk-notes" rows="2" placeholder="e.g. check ear infection"></textarea></div>
+<div class="mb10"><label class="lbl">Booking notes</label><textarea id="bk-notes" rows="2" placeholder="e.g. check ear infection"></textarea></div>
+<div class="mb10"><label class="lbl">For next time</label><textarea id="bk-nextnote" rows="2" placeholder="e.g. trim nails shorter next visit"></textarea></div>
 <div class="mb10">
   <label class="lbl">Products used</label>
   <div id="bk-products" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:2px"></div>
@@ -295,15 +296,15 @@ const DEF_PRICES={"Full groom":95,"Bath & brush":65,"Nail trim":25,"Puppy groom"
 const DEF_DUR={"Full groom":90,"Bath & brush":45,"Nail trim":15,"Puppy groom":60,"De-shedding treatment":30,"Poodle point":20};
 const DISC_PCT=10,MATTING_RATE=50,BEH_SURCHARGE=15,BEH_DUR_ADD=30;
 const BEH_SURCHARGE_TRAITS=["Requires muzzle","Bite risk"];
-const BEH_DUR_TRAITS=["Anxious","Senior / fragile","Separation anxiety","Fear of clippers","Resists handling","Sensitive feet","Requires muzzle","Eats air","Table active","Requires breaks"];
+const BEH_DUR_TRAITS=["Anxious","Separation anxiety","Fear of clippers","Resists handling","Sensitive feet","Requires muzzle","Eats air","Table active","Requires breaks"];
 const SIZE_MULT={"Mini":1,"Small":1,"Medium":1,"Large":1.2,"Extra large":1.4};
 const SIZE_DUR={"Mini":-10,"Small":0,"Medium":0,"Large":15,"Extra large":30};
-const BEHAVIOUR_TRAITS=["Food motivated","Friendly","Good with Bruce","Good with handling","Barks/howls","Eats air","Sensitive feet","Sitter","Table active","Anxious","Fear of clippers","Head shy","Noise sensitive","Senior / fragile","Separation anxiety","Bite risk","Escape risk","Flight risk","Resists handling","Requires breaks","Requires multiple sessions","Requires muzzle"];
+const BEHAVIOUR_TRAITS=["Food motivated","Friendly","Good with Bruce","Good with handling","High energy","Patient / tolerant","Timid","Vocal","Eats air","Sensitive feet","Sitter","Table active","Anxious","Fear of clippers","Head sensitive","Noise sensitive","Separation anxiety","Bite risk","Escape risk","Flight risk","Resists handling","Requires breaks","Requires multiple sessions","Requires muzzle"];
 const BREEDS=[
   "Australian Shepherd","Australian Terrier","Beagle","Beagle X","Border Collie","Border Terrier",
   "Boxer","Bull Arab","Bulldog","Bull Terrier","Cavalier","Chihuahua","Chow Chow","Cocker Spaniel",
   "Dachshund","Dalmatian","Dobermann","French Bulldog","German Shepherd","Golden Retriever",
-  "Great Dane","Greyhour","Husky","Jack Russell","Kelpie","Kelpie X","Labrador","Lab X",
+  "Great Dane","Greyhound","Unknown","Husky","Jack Russell","Kelpie","Kelpie X","Labrador","Lab X",
   "Maltese","Maremma","Miniature Schnauzer","Mixed breed","Pomeranian","Poodle","Pug",
   "Retriever X","Rottweiler","Samoyed","Shih Tzu","Springer Spaniel","Spoodle","Staffy","Staffy X",
   "Vizsla","Weimaraner","Whippet","Yorkshire Terrier",
@@ -365,7 +366,7 @@ function ptApproxDob(){
   return now.toISOString().slice(0,10);
 }
 
-const MEDICAL_TAGS=["Arthritis","Blind","Vision impaired","Heart condition","Diabetes","Allergies","Hip dysplasia","Recent surgery","Ear infection","Cancer","Kidney disease","Thyroid condition","Hearing Impaired","Deaf","Seizure History"];
+const MEDICAL_TAGS=["Senior / fragile","Arthritis","Blind","Vision impaired","Heart condition","Diabetes","Allergies","Hip dysplasia","Recent surgery","Ear infection","Cancer","Kidney disease","Thyroid condition","Hearing Impaired","Deaf","Seizure History"];
 
 const COAT_TYPES=["Curly Coat","Silky Coat","Wire Coat","Double Coat","Smooth Coat","Wavy Coat","Wool Coat","Medium Coat","Long Coat"];
 const SPECIAL_HANDLING_TRAITS=["Requires multiple sessions","Requires breaks","Requires muzzle"];
@@ -380,15 +381,15 @@ const fmtPhone=v=>{const d=v.replace(/\D/g,"").slice(0,10);if(d.length<=4)return
 const fmtAge=(dob,approx)=>{if(!dob)return"—";const b=new Date(dob),n=new Date();let y=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0){y--;m+=12;}if(approx)return y<=0?`~${m}mo`:`~${y}`;return y<=0?`${m}mo`:`${y}y ${m}mo`;};
 const isBrachy=breed=>["Bulldog","English Bulldog","French Bulldog","Pug","Boston Terrier","Shih Tzu","Lhasa Apso","Pekingese","Cavalier King Charles Spaniel","Boxer","Chow Chow","Shar Pei","Maltese Shih Tzu","Puggle","Affenpinscher","Brussels Griffon"].some(b=>breed&&breed.toLowerCase().includes(b.toLowerCase()));
 const BEH_COLOR_GREEN=["Friendly","Food motivated","Good with Bruce","Good with handling"];
-const BEH_COLOR_BLUE=["Sensitive feet","Eats air","Table active","Sitter","Barks/howls"];
-const BEH_COLOR_ORANGE=["Anxious","Senior / fragile","Separation anxiety","Fear of clippers","Head shy","Noise sensitive"];
+const BEH_COLOR_BLUE=["Sensitive feet","Eats air","Table active","Sitter","Vocal","High energy","Patient / tolerant","Timid"];
+const BEH_COLOR_ORANGE=["Anxious","Separation anxiety","Fear of clippers","Head sensitive","Noise sensitive"];
 const BEH_COLOR_RED=["Bite risk","Flight risk","Resists handling","Escape risk"];
 const behColor=t=>BEH_COLOR_GREEN.includes(t)?{bg:"#EAF7EE",text:"#5BAF7A",rank:0}:BEH_COLOR_BLUE.includes(t)?{bg:"#E8F3FF",text:"#185FA5",rank:1}:BEH_COLOR_ORANGE.includes(t)?{bg:"#FAEEDA",text:"#854F0B",rank:2}:BEH_COLOR_RED.includes(t)?{bg:"#FDECEA",text:"#E8534A",rank:3}:{bg:"#E8F3FF",text:"#185FA5",rank:4};
 const sortBehTraits=arr=>[...arr].sort((a,b)=>behColor(a).rank-behColor(b).rank||a.localeCompare(b));
 const medColor=t=>({bg:"#FDECEA",text:"#E8534A"});
 
 // ── GOOGLE SHEETS SYNC ─────────────────────────────────────────────────
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_ynXODB2AT9oXF_etXln8VxCJLxixmt0ILJvj7gWuG-corJsoJ2fIIqjEzk6AD1ub/exec"; // ← paste your deployed Apps Script URL here
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_ynXODB2AT9oXF_etXln8VxCJLxixmt0ILJvj7gWuG-corJsoJ2fIIqjEzk6AD1ub/exec";
 
 let _saveTimer=null;
 // Tracks pending Drive photo uploads so we know when everything is truly synced
@@ -426,7 +427,7 @@ async function pushToSheets(){
       if(afterPhoto&&afterPhoto.startsWith("http"))rest.afterPhoto=afterPhoto;
       return rest;
     });
-    const cleanPets=pets.map(p=>{const {photo,photos,...rest}=p;return rest;});
+    const cleanPets=pets.map(p=>{const {photo,photos,...rest}=p;if(photo&&photo.startsWith("http"))rest.photo=photo;return rest;});
     const data={action:"write",data:{Bookings:cleanBookings,Pets:cleanPets,Owners:owners,Expenses:expenses,Prices:prices,Durations:durations,Meta:{nextId,nextPetId,nextOId,nextExpId}}};
     const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(data),headers:{"Content-Type":"text/plain"}});
     const text=await res.text();
@@ -546,19 +547,37 @@ function reattachPhotos(){
   const bkPhotos=lsg("pg_bkPhotos2",{});
   bookings=bookings.map(b=>{
     const ph=bkPhotos[b.id]||{};
-    // Prefer Drive URLs from Sheets over local localStorage versions
     const beforePhoto=b.beforePhoto||ph.beforePhoto||null;
     const afterPhoto=b.afterPhoto||ph.afterPhoto||null;
-    // Persist merged URLs back to localStorage so they survive offline
     if(beforePhoto||afterPhoto){bkPhotos[b.id]={beforePhoto,afterPhoto};}
     return{...b,beforePhoto,afterPhoto};
   });
   lss("pg_bkPhotos2",bkPhotos);
+  // Merge pet Drive URLs from Sheets into localStorage
+  const petPhotos=lsg("pg_petPhotos2",{});
+  pets=pets.map(p=>{
+    const url=p.photo||petPhotos[p.id]||null;
+    if(url)petPhotos[p.id]=url;
+    return{...p,photo:url};
+  });
+  lss("pg_petPhotos2",petPhotos);
   const petPhotos=lsg("pg_petPhotos2",{});
   pets=pets.map(p=>({...p,photo:petPhotos[p.id]||null}));
 }
 let bookings=lsg("pg_bookings2",[]);
 let pets=lsg("pg_pets2",[]);
+// Migrate existing pet data: move "Senior / fragile" from behaviour to medicalTags,
+// rename "Head shy" -> "Head sensitive", "Barks/howls" -> "Vocal"
+pets=pets.map(p=>{
+  let beh=[...(p.behaviour||[])];
+  let med=[...(p.medicalTags||[])];
+  beh=beh.map(t=>t==="Head shy"?"Head sensitive":t==="Barks/howls"?"Vocal":t);
+  if(beh.includes("Senior / fragile")){
+    beh=beh.filter(t=>t!=="Senior / fragile");
+    if(!med.includes("Senior / fragile"))med=["Senior / fragile",...med];
+  }
+  return{...p,behaviour:beh,medicalTags:med};
+});
 let owners=lsg("pg_owners2",[]);
 let expenses=lsg("pg_expenses2",[
   {id:1,date:"2026-04-02",description:"Petway Curly Coat & Oodle Shampoo",amount:0,category:"supplies"},
@@ -663,7 +682,7 @@ function renderDashboard(){
     const brachy=pet&&isBrachy(pet.breed)?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:8px">Brachy</span>`:"";
     const behTags=(pet?.behaviour||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)).map(t=>{const c=behColor(t);return tag(t,c.bg,c.text);}).join("");
     const petPhoto=pet?.photo?`<img src="${pet.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="font-size:24px">🐾</div>`;
-    nextHtml=`<div class="card"><div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${petPhoto}<div style="flex:1"><div style="font-size:14px;font-weight:500">${pet?.name||"?"} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${pet?.breed||""}</span>${brachy}</div><div style="font-size:12px;color:#888">${owner?.name||"?"} &middot; ${owner?.phone||""}</div></div>${badge(next.status)}</div><div style="font-size:13px;margin-bottom:8px"><strong>${next.service}</strong>${(next.addOns||[]).length?" + "+next.addOns.join(", "):""} — ${fmtDate(next.date)} at ${fmtTime(next.time)}</div>${specialHandlingBox(pet,8)}${next.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:12px;color:#534AB7;margin-bottom:8px;white-space:pre-wrap">${next.notes}</div>`:""}<br>${behTags?`<div style="margin-bottom:10px">${behTags}</div>`:""}${(()=>{const lastBk=bookings.filter(b=>b.petId===next.petId&&b.id!==next.id&&b.status==="done"&&(b.products||[]).length).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))[0];return lastBk?`<div style="background:#EEF6FF;border-radius:6px;padding:6px 10px;font-size:11px;margin-bottom:8px"><span style="color:#185FA5;font-weight:600">Products last visit</span><br>${(lastBk.products||[]).map(p=>`<span style="display:inline-block;background:#D4EBFF;color:#185FA5;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;margin-right:3px">${p}</span>`).join("")}</div>`:"";})()}</div><div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;justify-content:flex-start"><button class="primary" onclick="markBkStatus(${next.id},'done')" style="padding:9px 18px;font-size:13px;background:#95ddbc;border-color:#95ddbc;color:#1a4a2e;box-shadow:0 3px 8px rgba(149,221,188,0.4)">Done</button><button class="primary" onclick="markBkStatus(${next.id},'cancelled')" style="padding:9px 18px;font-size:13px;background:#E8534A;border-color:#E8534A;box-shadow:0 3px 8px rgba(232,83,74,0.28)">Cancelled</button></div></div></div>`;
+    nextHtml=`<div class="card"><div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${petPhoto}<div style="flex:1"><div style="font-size:14px;font-weight:500">${pet?.name||"?"} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${pet?.breed||""}</span>${brachy}</div><div style="font-size:12px;color:#888">${owner?.name||"?"} &middot; ${owner?.phone||""}</div></div>${badge(next.status)}</div><div style="font-size:13px;margin-bottom:8px"><strong>${next.service}</strong>${(next.addOns||[]).length?" + "+next.addOns.join(", "):""} — ${fmtDate(next.date)} at ${fmtTime(next.time)}</div>${specialHandlingBox(pet,8)}${(()=>{const prevDone=[...bookings].filter(b=>b.petId===next.petId&&b.status==="done"&&b.nextnote).sort((a,b2)=>b2.date.localeCompare(a.date)||b2.time.localeCompare(a.time))[0];return prevDone?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:12px;color:#92400E;margin-bottom:8px;white-space:pre-wrap"><strong>For next time:</strong> ${prevDone.nextnote}</div>`:"";})()} <br>${behTags?`<div style="margin-bottom:10px">${behTags}</div>`:""}${(()=>{const lastBk=bookings.filter(b=>b.petId===next.petId&&b.id!==next.id&&b.status==="done"&&(b.products||[]).length).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))[0];return lastBk?`<div style="background:#EEF6FF;border-radius:6px;padding:6px 10px;font-size:11px;margin-bottom:8px"><span style="color:#185FA5;font-weight:600">Products last visit</span><br>${(lastBk.products||[]).map(p=>`<span style="display:inline-block;background:#D4EBFF;color:#185FA5;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;margin-right:3px">${p}</span>`).join("")}</div>`:"";})()}</div><div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;justify-content:flex-start"><button class="primary" onclick="markBkStatus(${next.id},'done')" style="padding:9px 18px;font-size:13px;background:#95ddbc;border-color:#95ddbc;color:#1a4a2e;box-shadow:0 3px 8px rgba(149,221,188,0.4)">Done</button><button class="primary" onclick="markBkStatus(${next.id},'cancelled')" style="padding:9px 18px;font-size:13px;background:#E8534A;border-color:#E8534A;box-shadow:0 3px 8px rgba(232,83,74,0.28)">Cancelled</button></div></div></div>`;
   }
   let upcomingMore="";
   if(upcoming.length>1){
@@ -711,7 +730,7 @@ function renderBookings(){
           </div>
         </div>
       </div>
-      ${b.notes||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap">${b.notes}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="flex:1"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="flex:1"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
+      ${b.notes||b.nextnote||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">Booking notes</strong><br>${b.notes}</div>`:""}${b.nextnote?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#92400E;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">For next time</strong><br>${b.nextnote}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="flex:1"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="flex:1"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
     </div>`;
   }).join("");
   return`<div class="search-row"><span style="font-size:14px;font-weight:500">All bookings</span><div class="right"><input type="text" id="bk-search" placeholder="Search..." style="width:140px" oninput="filterBookings()"/><select id="bk-status-filter" onchange="filterBookings()" style="width:auto"><option value="">All statuses</option><option>confirmed</option><option>pending</option><option>done</option><option>cancelled</option></select></div></div><div id="bk-cards">${cards||`<p style="text-align:center;color:#888;padding:2rem">No bookings yet.</p>`}</div>`;
@@ -755,7 +774,7 @@ function renderPets(){
     const medTags=(p.medicalTags||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)&&MEDICAL_TAGS.includes(t)).map(t=>{const c=medColor(t);return tag(t,c.bg,c.text);}).join("");
     const coatTags=(p.coatTypes||[]).filter(t=>COAT_TYPES.includes(t)).map(t=>tag(t,"#F0F0F0","#444")).join("");
     const photoEl=p.photo?`<img src="${p.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:44px;height:44px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🐾</div>`;
-    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${photoEl}<div style="flex:1"><div style="font-size:14px;font-weight:500">${p.name} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${p.breed}</span>${brachy}</div>${specialHandlingBox(p,4,4)}<div style="font-size:12px;color:#888;margin-top:2px">${p.sex} &middot; ${p.desexed?"Desexed":"Not desexed"} &middot; ${p.size} &middot; Age ${fmtAge(p.dob,p.approxAge)}${!p.approxAge&&p.dob?" &middot; "+fmtDate(p.dob):""}</div>${coatTags?`<div style="margin-top:4px">${coatTags}</div>`:""}<div style="margin-top:4px">${behTags}</div>${(medTags||p.medicalNotes)?`<div style="background:#FDECEB;border-radius:6px;padding:5px 8px;font-size:11px;color:#E8534A;margin-top:6px"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:5px"><span style="font-weight:600;white-space:nowrap">Medical:</span>${medTags}</div>${p.medicalNotes?`<div style="white-space:pre-wrap;margin-top:3px">${p.medicalNotes}</div>`:""}</div>`:""}${p.preferredStyle?`<div style="font-size:11px;color:#888;margin-top:4px"><strong>Preferred style:</strong> ${p.preferredStyle}</div>`:""}${p.lastNote?`<div style="background:#FAEEDA;border-radius:6px;padding:5px 8px;font-size:11px;color:#854F0B;margin-top:6px;white-space:pre-wrap">${p.lastNote}</div>`:""}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="sm" onclick="editPet(${p.id})">&#9998;</button><button class="sm" onclick="deletePet(${p.id})">&#128465;</button></div></div><div style="margin-top:6px;padding-left:54px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><span style="font-size:11px;color:#888">Last: ${last?`${fmtDate(last.date)} &middot; ${last.service}`:"—"}</span><span style="font-size:11px;color:#888">Owners: ${linkedOwners.map(o=>o.name).join(", ")||"—"}</span></div></div>`;
+    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${photoEl}<div style="flex:1"><div style="font-size:14px;font-weight:500">${p.name} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${p.breed}</span>${brachy}</div>${specialHandlingBox(p,4,4)}<div style="font-size:12px;color:#888;margin-top:2px">${p.sex} &middot; ${p.desexed?"Desexed":"Not desexed"} &middot; ${p.size} &middot; Age ${fmtAge(p.dob,p.approxAge)}</div>${coatTags?`<div style="margin-top:4px">${coatTags}</div>`:""}<div style="margin-top:4px">${behTags}</div>${(medTags||p.medicalNotes)?`<div style="background:#FDECEB;border-radius:6px;padding:5px 8px;font-size:11px;color:#E8534A;margin-top:6px"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:5px"><span style="font-weight:600;white-space:nowrap">Medical:</span>${medTags}</div>${p.medicalNotes?`<div style="white-space:pre-wrap;margin-top:3px">${p.medicalNotes}</div>`:""}</div>`:""}${p.preferredStyle?`<div style="font-size:11px;color:#888;margin-top:4px"><strong>Preferred style:</strong> ${p.preferredStyle}</div>`:""}${p.lastNote?`<div style="background:#FAEEDA;border-radius:6px;padding:5px 8px;font-size:11px;color:#854F0B;margin-top:6px;white-space:pre-wrap">${p.lastNote}</div>`:""}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="sm" onclick="editPet(${p.id})">&#9998;</button><button class="sm" onclick="deletePet(${p.id})">&#128465;</button></div></div><div style="margin-top:6px;padding-left:54px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><span style="font-size:11px;color:#888">Last: ${last?`${fmtDate(last.date)} &middot; ${last.service}`:"—"}</span><span style="font-size:11px;color:#888">Owners: ${linkedOwners.map(o=>o.name).join(", ")||"—"}</span></div></div>`;
   }).join("");
   return`<div class="search-row"><span style="font-size:14px;font-weight:500">Pet profiles</span><div class="right"><button class="accent" onclick="openPtModal(null)">+ New pet</button></div></div>${rows||`<p style="text-align:center;color:#888;padding:2rem">No pets yet.</p>`}`;
 }
@@ -951,74 +970,86 @@ function renderBkPhotos(onlySlot,status){
 }
 /* Crop modal */
 let bkCropSlot=null,bkCropImg=null;
+// ── Before/After photo crop ────────────────────────────────────────────────
+let _bkCropPanX=0,_bkCropPanY=0,_bkCropZoom=1,_bkCropImgW=0,_bkCropImgH=0;
+const BK_CROP_W=280,BK_CROP_H=350;
+
 function bkCropPhoto(slot){
   const data=slot==="before"?bkBeforePhoto:bkAfterPhoto;
-  if(!data)return;
+  if(!data||data.startsWith("http"))return; // can only crop local images
   bkCropSlot=slot;
   let overlay=document.getElementById("crop-overlay");
   if(!overlay){
     overlay=document.createElement("div");
     overlay.id="crop-overlay";
-    overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px";
+    overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px";
     overlay.innerHTML=`
-      <div style="color:#fff;font-size:13px;font-weight:500">Drag to reposition · Pinch or scroll to zoom</div>
-      <div id="crop-viewport" style="width:280px;height:350px;overflow:hidden;border-radius:10px;position:relative;background:#000;cursor:grab;touch-action:none">
-        <img id="crop-img" draggable="false" style="position:absolute;transform-origin:0 0;user-select:none;pointer-events:none"/>
+      <div style="color:#fff;font-size:13px;font-weight:500">Drag to reposition · Scroll to zoom</div>
+      <div id="bk-crop-vp" style="width:${BK_CROP_W}px;height:${BK_CROP_H}px;overflow:hidden;border-radius:10px;position:relative;background:#000;cursor:grab;touch-action:none;flex-shrink:0">
+        <img id="bk-crop-img" draggable="false" style="position:absolute;transform-origin:0 0;user-select:none;pointer-events:none"/>
       </div>
-      <div style="display:flex;gap:8px">
-        <input type="range" id="crop-zoom" min="0.5" max="3" step="0.01" value="1" style="width:160px" oninput="cropZoomChange()"/>
-      </div>
+      <input type="range" id="bk-crop-zoom" min="1" max="5" step="0.01" value="1" style="width:200px" oninput="bkCropZoomChange()"/>
       <div style="display:flex;gap:10px">
-        <button onclick="closeCropOverlay()" style="padding:8px 20px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer">Cancel</button>
-        <button onclick="applyCrop()" style="padding:8px 20px;border-radius:8px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-weight:500">Apply crop</button>
+        <button onclick="closeBkCropOverlay()" style="padding:8px 20px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;cursor:pointer">Cancel</button>
+        <button onclick="applyBkCrop()" style="padding:8px 20px;border-radius:8px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-weight:500">Apply</button>
       </div>`;
     document.body.appendChild(overlay);
-    // Drag to pan
-    const vp=overlay.querySelector("#crop-viewport");
-    let dragging=false,startX,startY;
-    vp.addEventListener("mousedown",e=>{dragging=true;startX=e.clientX-curPanX;startY=e.clientY-curPanY;vp.style.cursor="grabbing";});
-    window.addEventListener("mousemove",e=>{if(!dragging)return;curPanX=e.clientX-startX;curPanY=e.clientY-startY;cropUpdateTransform();});
-    window.addEventListener("mouseup",()=>{dragging=false;vp.style.cursor="grab";});
-    // Touch pan
-    let t0;
-    vp.addEventListener("touchstart",e=>{if(e.touches.length===1){t0={x:e.touches[0].clientX-curPanX,y:e.touches[0].clientY-curPanY};}e.preventDefault();},{passive:false});
-    vp.addEventListener("touchmove",e=>{if(e.touches.length===1){curPanX=e.touches[0].clientX-t0.x;curPanY=e.touches[0].clientY-t0.y;cropUpdateTransform();}e.preventDefault();},{passive:false});
-    // Scroll zoom
-    vp.addEventListener("wheel",e=>{e.preventDefault();const z=document.getElementById("crop-zoom");z.value=Math.min(3,Math.max(0.5,parseFloat(z.value)-e.deltaY*0.001));cropZoomChange();},{passive:false});
+    const vp=overlay.querySelector("#bk-crop-vp");
+    let drag=false,sx=0,sy=0;
+    vp.addEventListener("mousedown",e=>{drag=true;sx=e.clientX-_bkCropPanX;sy=e.clientY-_bkCropPanY;vp.style.cursor="grabbing";e.preventDefault();});
+    window.addEventListener("mousemove",e=>{if(!drag)return;_bkCropPanX=e.clientX-sx;_bkCropPanY=e.clientY-sy;bkCropClamp();bkCropApplyTransform();});
+    window.addEventListener("mouseup",()=>{drag=false;vp.style.cursor="grab";});
+    let t0bk;
+    vp.addEventListener("touchstart",e=>{if(e.touches.length===1){t0bk={x:e.touches[0].clientX-_bkCropPanX,y:e.touches[0].clientY-_bkCropPanY};}e.preventDefault();},{passive:false});
+    vp.addEventListener("touchmove",e=>{if(e.touches.length===1){_bkCropPanX=e.touches[0].clientX-t0bk.x;_bkCropPanY=e.touches[0].clientY-t0bk.y;bkCropClamp();bkCropApplyTransform();}e.preventDefault();},{passive:false});
+    vp.addEventListener("wheel",e=>{e.preventDefault();const zEl=document.getElementById("bk-crop-zoom");zEl.value=Math.min(5,Math.max(1,parseFloat(zEl.value)-e.deltaY*0.005));bkCropZoomChange();},{passive:false});
   }
-  // Reset state
-  curPanX=0;curPanY=0;
-  const img=document.getElementById("crop-img");
+  const img=document.getElementById("bk-crop-img");
   img.onload=()=>{
-    const vp=document.getElementById("crop-viewport");
-    const scale=Math.max(280/img.naturalWidth,350/img.naturalHeight);
-    document.getElementById("crop-zoom").value=scale;
-    curPanX=(280-img.naturalWidth*scale)/2;
-    curPanY=(350-img.naturalHeight*scale)/2;
-    cropUpdateTransform();
+    _bkCropImgW=img.naturalWidth;_bkCropImgH=img.naturalHeight;
+    const minZ=Math.max(BK_CROP_W/_bkCropImgW,BK_CROP_H/_bkCropImgH);
+    _bkCropZoom=minZ;
+    const zEl=document.getElementById("bk-crop-zoom");
+    zEl.min=minZ;zEl.max=minZ*4;zEl.value=minZ;
+    _bkCropPanX=(BK_CROP_W-_bkCropImgW*minZ)/2;
+    _bkCropPanY=(BK_CROP_H-_bkCropImgH*minZ)/2;
+    bkCropApplyTransform();
   };
   img.src=data;
-  document.getElementById("crop-overlay").style.display="flex";
+  overlay.style.display="flex";
 }
-function cropUpdateTransform(){
-  const img=document.getElementById("crop-img");
-  const z=parseFloat(document.getElementById("crop-zoom").value);
-  img.style.transform=`translate(${curPanX}px,${curPanY}px) scale(${z})`;
+function bkCropClamp(){
+  // Keep image covering the viewport
+  _bkCropPanX=Math.min(0,Math.max(BK_CROP_W-_bkCropImgW*_bkCropZoom,_bkCropPanX));
+  _bkCropPanY=Math.min(0,Math.max(BK_CROP_H-_bkCropImgH*_bkCropZoom,_bkCropPanY));
 }
-let curPanX=0,curPanY=0;
-function cropZoomChange(){cropUpdateTransform();}
-function closeCropOverlay(){document.getElementById("crop-overlay").style.display="none";}
-function applyCrop(){
-  const img=document.getElementById("crop-img");
-  const z=parseFloat(document.getElementById("crop-zoom").value);
+function bkCropApplyTransform(){
+  const img=document.getElementById("bk-crop-img");
+  if(img)img.style.transform=`translate(${_bkCropPanX}px,${_bkCropPanY}px) scale(${_bkCropZoom})`;
+}
+function bkCropZoomChange(){
+  const prev=_bkCropZoom;
+  _bkCropZoom=parseFloat(document.getElementById("bk-crop-zoom").value);
+  // Zoom toward centre of viewport
+  _bkCropPanX=BK_CROP_W/2-(_bkCropZoom/prev)*(BK_CROP_W/2-_bkCropPanX);
+  _bkCropPanY=BK_CROP_H/2-(_bkCropZoom/prev)*(BK_CROP_H/2-_bkCropPanY);
+  bkCropClamp();bkCropApplyTransform();
+}
+function closeBkCropOverlay(){document.getElementById("crop-overlay").style.display="none";}
+function applyBkCrop(){
   const canvas=document.createElement("canvas");
   canvas.width=400;canvas.height=500;
   const ctx=canvas.getContext("2d");
-  ctx.drawImage(img,curPanX/z,curPanY/z,400/z,500/z,0,0,400,500);
+  // Source coords: what part of the original image is visible in the viewport
+  const sx=-_bkCropPanX/_bkCropZoom;
+  const sy=-_bkCropPanY/_bkCropZoom;
+  const sw=BK_CROP_W/_bkCropZoom;
+  const sh=BK_CROP_H/_bkCropZoom;
+  ctx.drawImage(document.getElementById("bk-crop-img"),sx,sy,sw,sh,0,0,400,500);
   const result=canvas.toDataURL("image/jpeg",0.92);
   if(bkCropSlot==="before")bkBeforePhoto=result;
   else bkAfterPhoto=result;
-  closeCropOverlay();
+  closeBkCropOverlay();
   renderBkPhotos();
 }
 function openBkModal(b){
@@ -1033,6 +1064,7 @@ function openBkModal(b){
   document.getElementById("bk-time").value=b?.time||"09:00";
   document.getElementById("bk-status").value=b?.status??"confirmed";
   document.getElementById("bk-notes").value=b?.notes||"";
+  document.getElementById("bk-nextnote").value=b?.nextnote||"";
   document.getElementById("bk-matting").value=b?.mattingMinutes||0;
   document.getElementById("bk-custom").value=b?.customPrice??"";
   document.getElementById("bk-waived").checked=b?.waived||false;
@@ -1142,7 +1174,7 @@ async function saveBkModal(){
     _pendingBeforeUpload=null;_pendingAfterUpload=null;
   }
   const customRaw=document.getElementById("bk-custom").value;
-  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
+  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   if(bkEditing){bookings=bookings.map(b=>b.id===bkEditing.id?{...b,...obj}:b);}else{bookings.push({id:nextId++,...obj});}
   save();closeBkModal();render();
 }
@@ -1483,6 +1515,31 @@ function applyCrop(){
   ptPhotoData=canvas.toDataURL("image/jpeg",0.92);
   renderPtPhoto();
   closeCropModal();
+  // Upload pet photo to Drive in background so it syncs across devices
+  if(SCRIPT_URL&&SCRIPT_URL!=="YOUR_APPS_SCRIPT_URL_HERE"){
+    (async()=>{
+      try{
+        const base64=ptPhotoData.split(",")[1];
+        const res=await fetch(SCRIPT_URL,{method:"POST",
+          body:JSON.stringify({action:"uploadPhoto",filename:"pet_"+Date.now()+".jpg",mimeType:"image/jpeg",base64}),
+          headers:{"Content-Type":"text/plain"}});
+        const json=await res.json().catch(()=>({}));
+        if(json.ok&&json.url){
+          ptPhotoData=json.url;
+          renderPtPhoto();
+          // If editing, immediately persist Drive URL
+          if(ptEditing){
+            pets=pets.map(p=>p.id===ptEditing.id?{...p,photo:json.url}:p);
+            const petPhotos=JSON.parse(localStorage.getItem("pg_petPhotos2")||"{}");
+            petPhotos[ptEditing.id]=json.url;
+            lss("pg_petPhotos2",petPhotos);
+            save();
+          }
+          console.log("Pet photo uploaded to Drive:",json.url);
+        }
+      }catch(e){console.warn("Pet photo Drive upload failed:",e.message);}
+    })();
+  }
 }
 // ───────────────────────────────────────────────────────────────────────
 </script>
