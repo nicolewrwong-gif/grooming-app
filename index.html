@@ -388,7 +388,7 @@ const sortBehTraits=arr=>[...arr].sort((a,b)=>behColor(a).rank-behColor(b).rank|
 const medColor=t=>({bg:"#FDECEA",text:"#E8534A"});
 
 // ── GOOGLE SHEETS SYNC ─────────────────────────────────────────────────
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwz9XoQWK5GNgztbH1Xs_Le2WylmAsRDpHfnrASLez75tbHvkTTACCyxWNUXo-fpeBB/exec"; // ← paste your deployed Apps Script URL here
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg8vy_t6w9f4xCxB7cJz7xM8U0iiCzDED0UV2j-Ypu7OeFno8ROwCp0qVTjAyjHWHy/exec"; // ← paste your deployed Apps Script URL here
 
 let _saveTimer=null;
 // Tracks pending Drive photo uploads so we know when everything is truly synced
@@ -419,7 +419,13 @@ function checkAllSynced(){
 async function pushToSheets(){
   _sheetsWriteOk=false;
   try{
-    const cleanBookings=bookings.map(b=>{const {beforePhoto,afterPhoto,...rest}=b;return rest;});
+    // Include Drive URLs in sheet data (skip base64 to keep data small)
+    const cleanBookings=bookings.map(b=>{
+      const {beforePhoto,afterPhoto,...rest}=b;
+      if(beforePhoto&&beforePhoto.startsWith("http"))rest.beforePhoto=beforePhoto;
+      if(afterPhoto&&afterPhoto.startsWith("http"))rest.afterPhoto=afterPhoto;
+      return rest;
+    });
     const cleanPets=pets.map(p=>{const {photo,photos,...rest}=p;return rest;});
     const data={action:"write",data:{Bookings:cleanBookings,Pets:cleanPets,Owners:owners,Expenses:expenses,Prices:prices,Durations:durations,Meta:{nextId,nextPetId,nextOId,nextExpId}}};
     const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(data),headers:{"Content-Type":"text/plain"}});
@@ -538,7 +544,16 @@ function lsg(key,fallback){
 // Reattach photos after loading
 function reattachPhotos(){
   const bkPhotos=lsg("pg_bkPhotos2",{});
-  bookings=bookings.map(b=>{const ph=bkPhotos[b.id]||{};return{...b,beforePhoto:ph.beforePhoto||null,afterPhoto:ph.afterPhoto||null};});
+  bookings=bookings.map(b=>{
+    const ph=bkPhotos[b.id]||{};
+    // Prefer Drive URLs from Sheets over local localStorage versions
+    const beforePhoto=b.beforePhoto||ph.beforePhoto||null;
+    const afterPhoto=b.afterPhoto||ph.afterPhoto||null;
+    // Persist merged URLs back to localStorage so they survive offline
+    if(beforePhoto||afterPhoto){bkPhotos[b.id]={beforePhoto,afterPhoto};}
+    return{...b,beforePhoto,afterPhoto};
+  });
+  lss("pg_bkPhotos2",bkPhotos);
   const petPhotos=lsg("pg_petPhotos2",{});
   pets=pets.map(p=>({...p,photo:petPhotos[p.id]||null}));
 }
