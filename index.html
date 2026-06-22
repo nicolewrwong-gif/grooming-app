@@ -498,7 +498,7 @@ async function loadFromSheets(){
     }
     if(json.ok&&json.data){
       const d=json.data;
-      if(d.Bookings)bookings=d.Bookings;
+      if(d.Bookings){const seen=new Set();bookings=d.Bookings.filter(b=>{if(seen.has(b.id))return false;seen.add(b.id);return true;});}
       if(d.Pets)pets=d.Pets;
       if(d.Owners)owners=d.Owners;
       if(d.Expenses&&d.Expenses.length)expenses=d.Expenses;
