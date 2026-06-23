@@ -850,6 +850,7 @@ function renderFinances(){
 
 let bkEditing=null,bkActiveAddons=[],bkActiveProducts=[],bkBeforePhoto=null,bkAfterPhoto=null;
 let _pendingBeforeUpload=null,_pendingAfterUpload=null; // Promises that resolve to Drive URL or null
+let bkBeforePreCropUrl=null,bkAfterPreCropUrl=null; // Drive URLs superseded by a crop, pending deletion
 
 // Compress an image file to a JPEG data URL small enough for localStorage
 function compressPhoto(file,maxW,maxH,quality){
@@ -993,10 +994,12 @@ async function bkCropPhoto(slot){
   if(data.startsWith("http")){
     try{
       renderBkPhotos(slot,"uploading"); // show spinner while fetching
+      const preCropUrl=data; // remember so we can delete it after the new crop uploads
       const res=await fetch(data);
       const blob=await res.blob();
       data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>resolve(e.target.result);r.onerror=reject;r.readAsDataURL(blob);});
-      if(slot==="before")bkBeforePhoto=data;else bkAfterPhoto=data;
+      if(slot==="before"){bkBeforePhoto=data;bkBeforePreCropUrl=preCropUrl;}
+      else{bkAfterPhoto=data;bkAfterPreCropUrl=preCropUrl;}
       renderBkPhotos();
     }catch(e){
       alert("Could not load photo for cropping. Check your connection and try again.");
@@ -1095,7 +1098,10 @@ function applyBkCrop(){
           headers:{"Content-Type":"text/plain"}});
         const json=await res.json().catch(()=>({}));
         if(json.ok&&json.url){
-          if(slot==="before")bkBeforePhoto=json.url;else bkAfterPhoto=json.url;
+          // Delete the Drive file that existed before this crop
+          const preCropUrl=slot==="before"?bkBeforePreCropUrl:bkAfterPreCropUrl;
+          deletePhotoFromDrive(preCropUrl);
+          if(slot==="before"){bkBeforePhoto=json.url;bkBeforePreCropUrl=null;}else{bkAfterPhoto=json.url;bkAfterPreCropUrl=null;}
           if(bkEditing){
             bookings=bookings.map(b=>b.id===bkEditing.id?{...b,[slot+"Photo"]:json.url}:b);
             const bookingPhotos=JSON.parse(localStorage.getItem("pg_bkPhotos2")||"{}");
@@ -1114,7 +1120,7 @@ function applyBkCrop(){
   }
 }
 function openBkModal(b){
-  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;
+  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
   document.getElementById("bk-title").textContent=b?"Edit booking":"New booking";
   // Populate all pets (sorted alphabetically)
   const petSel=document.getElementById("bk-pet");
@@ -1186,13 +1192,30 @@ function renderBkProducts(active){
   }
   el.innerHTML=html;
 }
+function isDeshedProduct(p){return/deshed|de-shed/i.test(p)&&/david|rinse/i.test(p);}
+const DESHED_ADDON="De-shedding treatment";
 function toggleAddon(a){
   if(bkActiveAddons.includes(a))bkActiveAddons=bkActiveAddons.filter(x=>x!==a);else bkActiveAddons.push(a);
-  renderBkAddons(bkActiveAddons);updateBkPrice();
+  // Auto-link: toggling the deshed addon syncs the David deshed rinse product
+  if(a===DESHED_ADDON){
+    const adding=bkActiveAddons.includes(DESHED_ADDON);
+    const deshedProd=getProductsFromExpenses().find(isDeshedProduct);
+    if(deshedProd){
+      if(adding&&!bkActiveProducts.includes(deshedProd))bkActiveProducts.push(deshedProd);
+      else if(!adding)bkActiveProducts=bkActiveProducts.filter(x=>x!==deshedProd);
+    }
+  }
+  renderBkAddons(bkActiveAddons);renderBkProducts(bkActiveProducts);updateBkPrice();
 }
 function toggleProduct(p){
   if(bkActiveProducts.includes(p))bkActiveProducts=bkActiveProducts.filter(x=>x!==p);else bkActiveProducts.push(p);
-  renderBkProducts(bkActiveProducts);
+  // Auto-link: toggling the David deshed rinse product syncs the deshed addon
+  if(isDeshedProduct(p)){
+    const adding=bkActiveProducts.includes(p);
+    if(adding&&!bkActiveAddons.includes(DESHED_ADDON))bkActiveAddons.push(DESHED_ADDON);
+    else if(!adding)bkActiveAddons=bkActiveAddons.filter(x=>x!==DESHED_ADDON);
+  }
+  renderBkAddons(bkActiveAddons);renderBkProducts(bkActiveProducts);updateBkPrice();
 }
 function bkOwnerChanged(sel){document.getElementById("bk-owner").value=sel.value;updateBkPrice();}
 function renderBkPets(ownerId,selPetId){/* legacy no-op */}
@@ -1220,7 +1243,22 @@ function updateBkPrice(){
   html+=`<div class="price-row total"><span>Total</span><span>${waived?"Waived":fmtMoney(total)}</span></div><div class="price-row"><span style="color:#888;font-size:11px">Est. duration</span><span style="color:#888;font-size:11px">${duration} min</span></div>`;
   document.getElementById("bk-price-box").innerHTML=html;
 }
-function closeBkModal(){document.getElementById("modal-booking").classList.remove("open");bkEditing=null;bkActiveAddons=[];bkActiveProducts=[];}
+function closeBkModal(){
+  document.getElementById("modal-booking").classList.remove("open");
+  // If user cancels, delete Drive photos uploaded this session that won't be saved
+  const savedBefore=bkEditing?.beforePhoto||null;
+  const savedAfter=bkEditing?.afterPhoto||null;
+  Promise.all([_pendingBeforeUpload||Promise.resolve(null),_pendingAfterUpload||Promise.resolve(null)]).then(([b,a])=>{
+    if(b&&b!==savedBefore)deletePhotoFromDrive(b);
+    if(a&&a!==savedAfter)deletePhotoFromDrive(a);
+  });
+  if(bkBeforePhoto&&bkBeforePhoto.startsWith("http")&&bkBeforePhoto!==savedBefore)deletePhotoFromDrive(bkBeforePhoto);
+  if(bkAfterPhoto&&bkAfterPhoto.startsWith("http")&&bkAfterPhoto!==savedAfter)deletePhotoFromDrive(bkAfterPhoto);
+  deletePhotoFromDrive(bkBeforePreCropUrl);
+  deletePhotoFromDrive(bkAfterPreCropUrl);
+  bkEditing=null;bkActiveAddons=[];bkActiveProducts=[];
+  bkBeforePhoto=null;bkAfterPhoto=null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
+}
 async function saveBkModal(){
   const ownerId=Number(document.getElementById("bk-owner").value);
   const petId=Number(document.getElementById("bk-pet").value);
@@ -1237,6 +1275,11 @@ async function saveBkModal(){
   const customRaw=document.getElementById("bk-custom").value;
   const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   if(bkEditing){bookings=bookings.map(b=>b.id===bkEditing.id?{...b,...obj}:b);}else{bookings.push({id:nextId++,...obj});}
+  // Clean up any Drive URLs superseded by crops during this session
+  deletePhotoFromDrive(bkBeforePreCropUrl);deletePhotoFromDrive(bkAfterPreCropUrl);
+  bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
+  // Mark current photos as "saved" so closeBkModal doesn't delete them
+  bkEditing={...(bkEditing||{}),beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   save();closeBkModal();render();
 }
 function markBkStatus(id,status){bookings=bookings.map(b=>b.id===id?{...b,status}:b);save();render();}
