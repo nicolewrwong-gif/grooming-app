@@ -505,7 +505,7 @@ async function loadFromSheets(){
       if(d.Prices)prices=d.Prices;
       if(d.Durations)durations=d.Durations;
       if(d.Meta){nextId=d.Meta.nextId||nextId;nextPetId=d.Meta.nextPetId||nextPetId;nextOId=d.Meta.nextOId||nextOId;nextExpId=d.Meta.nextExpId||nextExpId;}
-      reattachPhotos();
+      reattachPhotos(true);
       // Save Sheet data to localStorage so it persists on reload
       lss("pg_bookings2",bookings.map(b=>{const{beforePhoto,afterPhoto,...r}=b;return r;}));
       lss("pg_pets2",pets.map(p=>{const{photo,...r}=p;return r;}));
@@ -542,22 +542,27 @@ function lsg(key,fallback){
   }
 }
 
-// Reattach photos after loading
-function reattachPhotos(){
+// Reattach photos after loading.
+// fromSheets=true means the bookings/pets arrays came fresh from Sheets and are authoritative —
+// don't resurrect deleted photos from the local cache.
+function reattachPhotos(fromSheets=false){
   const bkPhotos=lsg("pg_bkPhotos2",{});
   bookings=bookings.map(b=>{
     const ph=bkPhotos[b.id]||{};
-    const beforePhoto=b.beforePhoto||ph.beforePhoto||null;
-    const afterPhoto=b.afterPhoto||ph.afterPhoto||null;
+    // If data came from Sheets, the Sheets value is authoritative (null means deleted).
+    // Only fall back to local cache when loading purely from localStorage (offline).
+    const beforePhoto=fromSheets ? (b.beforePhoto||null) : (b.beforePhoto||ph.beforePhoto||null);
+    const afterPhoto=fromSheets  ? (b.afterPhoto||null)  : (b.afterPhoto||ph.afterPhoto||null);
     if(beforePhoto||afterPhoto){bkPhotos[b.id]={beforePhoto,afterPhoto};}
+    else{delete bkPhotos[b.id];}  // prune stale cache entries
     return{...b,beforePhoto,afterPhoto};
   });
   lss("pg_bkPhotos2",bkPhotos);
-  // Merge pet Drive URLs from Sheets into localStorage
   const petPhotos=lsg("pg_petPhotos2",{});
   pets=pets.map(p=>{
-    const url=p.photo||petPhotos[p.id]||null;
-    if(url)petPhotos[p.id]=url;
+    const url=fromSheets ? (p.photo||null) : (p.photo||petPhotos[p.id]||null);
+    if(url){petPhotos[p.id]=url;}
+    else{delete petPhotos[p.id];}  // prune stale cache entries
     return{...p,photo:url};
   });
   lss("pg_petPhotos2",petPhotos);
