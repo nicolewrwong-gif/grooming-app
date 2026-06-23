@@ -986,9 +986,24 @@ let bkCropSlot=null,bkCropImg=null;
 let _bkCropPanX=0,_bkCropPanY=0,_bkCropZoom=1,_bkCropImgW=0,_bkCropImgH=0;
 const BK_CROP_W=280,BK_CROP_H=350;
 
-function bkCropPhoto(slot){
-  const data=slot==="before"?bkBeforePhoto:bkAfterPhoto;
-  if(!data||data.startsWith("http"))return; // can only crop local images
+async function bkCropPhoto(slot){
+  let data=slot==="before"?bkBeforePhoto:bkAfterPhoto;
+  if(!data)return;
+  // If the photo is a remote URL (already uploaded to Drive), fetch and convert to data URI first
+  if(data.startsWith("http")){
+    try{
+      renderBkPhotos(slot,"uploading"); // show spinner while fetching
+      const res=await fetch(data);
+      const blob=await res.blob();
+      data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>resolve(e.target.result);r.onerror=reject;r.readAsDataURL(blob);});
+      if(slot==="before")bkBeforePhoto=data;else bkAfterPhoto=data;
+      renderBkPhotos();
+    }catch(e){
+      alert("Could not load photo for cropping. Check your connection and try again.");
+      renderBkPhotos();
+      return;
+    }
+  }
   bkCropSlot=slot;
   let overlay=document.getElementById("bk-crop-overlay");
   if(!overlay){
@@ -1067,6 +1082,36 @@ function applyBkCrop(){
   else bkAfterPhoto=result;
   closeBkCropOverlay();
   renderBkPhotos();
+  // Re-upload cropped result to Drive (replaces old URL) if we have a script endpoint
+  if(SCRIPT_URL&&SCRIPT_URL!=="YOUR_APPS_SCRIPT_URL_HERE"){
+    const slot=bkCropSlot;
+    photoUploadStarted();
+    renderBkPhotos(slot,"uploading");
+    const uploadPromise=(async()=>{
+      try{
+        const base64=result.split(",")[1];
+        const res=await fetch(SCRIPT_URL,{method:"POST",
+          body:JSON.stringify({action:"uploadPhoto",filename:slot+"_"+Date.now()+".jpg",mimeType:"image/jpeg",base64}),
+          headers:{"Content-Type":"text/plain"}});
+        const json=await res.json().catch(()=>({}));
+        if(json.ok&&json.url){
+          if(slot==="before")bkBeforePhoto=json.url;else bkAfterPhoto=json.url;
+          if(bkEditing){
+            bookings=bookings.map(b=>b.id===bkEditing.id?{...b,[slot+"Photo"]:json.url}:b);
+            const bookingPhotos=JSON.parse(localStorage.getItem("pg_bkPhotos2")||"{}");
+            bookingPhotos[bkEditing.id]={...(bookingPhotos[bkEditing.id]||{}),[slot+"Photo"]:json.url};
+            lss("pg_bkPhotos2",bookingPhotos);
+            save();
+          }
+          renderBkPhotos(slot,"done");
+          photoUploadFinished(true);
+          return json.url;
+        }else{photoUploadFinished(false);return null;}
+      }catch(err){photoUploadFinished(false);return null;}
+    })();
+    if(slot==="before")_pendingBeforeUpload=uploadPromise;
+    else _pendingAfterUpload=uploadPromise;
+  }
 }
 function openBkModal(b){
   bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;
@@ -1200,7 +1245,7 @@ function deleteBk(id){openConfirm("Delete this booking?","Delete",()=>{bookings=
 function togglePaid(id){bookings=bookings.map(b=>b.id===id?{...b,paid:!b.paid,waived:false}:b);save();render();}
 function waiveBk(id){openConfirm("Waive payment for this booking?","Waive",()=>{bookings=bookings.map(b=>b.id===id?{...b,waived:true,paid:false}:b);save();render();});}
 
-let ptEditing=null,ptActiveBehaviour=[],ptActiveCoats=[],ptActiveMedical=[],ptActiveOwners=[],ptPhotoData=null;
+let ptEditing=null,ptActiveBehaviour=[],ptActiveCoats=[],ptActiveMedical=[],ptActiveOwners=[],ptPhotoData=null,_pendingPetPhotoUpload=null;
 function ptPhotoSelected(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
@@ -1235,7 +1280,7 @@ function openPtModal(pet){
   ptActiveCoats=[...(pet?.coatTypes||[])];
   ptActiveMedical=[...(pet?.medicalTags||[])];
   ptActiveOwners=[...(pet?.ownerIds||[])];
-  ptPhotoData=pet?.photo||null;
+  ptPhotoData=pet?.photo||null;_pendingPetPhotoUpload=null;
   document.getElementById("pt-special-custom").value=pet?.customSpecialHandling||"";
   // Load breeds
   ptSelectedBreeds=pet?.breed?pet.breed.split(" X ").map(s=>s.trim()).filter(Boolean):[];
@@ -1282,13 +1327,20 @@ function ptCoatToggle(i){const t=COAT_TYPES[i];ptActiveCoats=ptActiveCoats.inclu
 function ptMedToggle(i){const t=MEDICAL_TAGS[i];ptActiveMedical=ptActiveMedical.includes(t)?ptActiveMedical.filter(x=>x!==t):[...ptActiveMedical,t];renderPtToggles();}
 function ptOwnToggle(i){const oid=owners[i]?.id;if(!oid)return;ptActiveOwners=ptActiveOwners.includes(oid)?ptActiveOwners.filter(x=>x!==oid):[...ptActiveOwners,oid];renderPtToggles();}
 function closePtModal(){document.getElementById("modal-pet").classList.remove("open");ptEditing=null;}
-function savePtModal(){
+async function savePtModal(){
   const name=document.getElementById("pt-name").value.trim();
   const breed=ptGetBreedString();
   if(!name||!breed){alert("Please enter name and at least one breed.");return;}
   const approxAge=document.getElementById("pt-approx-age").checked;
   const dob=approxAge?ptApproxDob():document.getElementById("pt-dob").value;
   if(!ptActiveOwners.length){alert("Please link at least one owner.");return;}
+  // Wait for Drive upload to finish so we save the URL, not a large base64 blob
+  if(_pendingPetPhotoUpload){
+    setSyncStatus("saving");
+    const url=await _pendingPetPhotoUpload;
+    if(url)ptPhotoData=url;
+    _pendingPetPhotoUpload=null;
+  }
   const obj={name,breed,dob:dob,approxAge:approxAge,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim()};
   if(ptEditing){pets=pets.map(p=>p.id===ptEditing.id?{...p,...obj}:p);}else{pets.push({id:nextPetId++,...obj});}
   save();closePtModal();render();
@@ -1535,7 +1587,7 @@ function applyCrop(){
   closeCropModal();
   // Upload pet photo to Drive in background so it syncs across devices
   if(SCRIPT_URL&&SCRIPT_URL!=="YOUR_APPS_SCRIPT_URL_HERE"){
-    (async()=>{
+    _pendingPetPhotoUpload=(async()=>{
       try{
         const base64=ptPhotoData.split(",")[1];
         const res=await fetch(SCRIPT_URL,{method:"POST",
@@ -1554,8 +1606,10 @@ function applyCrop(){
             save();
           }
           console.log("Pet photo uploaded to Drive:",json.url);
+          return json.url;
         }
-      }catch(e){console.warn("Pet photo Drive upload failed:",e.message);}
+        return null;
+      }catch(e){console.warn("Pet photo Drive upload failed:",e.message);return null;}
     })();
   }
 }
