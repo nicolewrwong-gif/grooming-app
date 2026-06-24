@@ -1047,7 +1047,7 @@ async function bkCropPhoto(slot){
     const minZ=Math.max(BK_CROP_W/_bkCropImgW,BK_CROP_H/_bkCropImgH);
     _bkCropZoom=minZ;
     const zEl=document.getElementById("bk-crop-zoom");
-    zEl.min=minZ;zEl.max=minZ*4;zEl.value=minZ;
+    zEl.min=minZ;zEl.max=minZ*6;zEl.value=minZ;
     _bkCropPanX=(BK_CROP_W-_bkCropImgW*minZ)/2;
     _bkCropPanY=(BK_CROP_H-_bkCropImgH*minZ)/2;
     bkCropApplyTransform();
@@ -1504,10 +1504,10 @@ loadFromSheets().then(loaded=>{
 <div id="modal-crop" class="modal-bg">
 <div class="modal" style="width:500px">
 <h2>Crop & adjust photo</h2>
-<div style="position:relative;width:100%;height:320px;background:#111;border-radius:10px;overflow:hidden;margin-bottom:12px;cursor:crosshair" id="crop-container">
-  <img id="crop-img" style="position:absolute;transform-origin:top left" draggable="false"/>
-  <div id="crop-overlay" style="position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 2000px rgba(0,0,0,0.45)"></div>
-  <div id="crop-box" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);cursor:move"></div>
+<div style="color:#aaa;font-size:11px;text-align:center;margin-bottom:6px">Drag image to reposition · Scroll or pinch to zoom</div>
+<div style="position:relative;width:100%;height:320px;background:#111;border-radius:10px;overflow:hidden;margin-bottom:12px;cursor:grab;touch-action:none" id="crop-container">
+  <img id="crop-img" style="position:absolute;transform-origin:0 0;user-select:none;pointer-events:none" draggable="false"/>
+  <div id="crop-box" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);pointer-events:none"></div>
 </div>
 <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
   <label class="lbl" style="margin:0;white-space:nowrap">Zoom</label>
@@ -1525,17 +1525,20 @@ loadFromSheets().then(loaded=>{
 
 <script>
 // ── IMAGE CROP ──────────────────────────────────────────────────────────
-let _cropImg=null,_cropRaw=null,_cropScale=1,_cropRot=0,_cropFlip=false;
-let _cropX=0,_cropY=0,_cropW=200,_cropH=200;
-let _drag=false,_dragSX=0,_dragSY=0,_dragBX=0,_dragBY=0;
+// Pan-image, fixed-box cropper. _cropPanX/Y = image top-left position in container.
+let _cropRaw=null,_cropScale=1,_cropRot=0,_cropFlipH=false;
+let _cropPanX=0,_cropPanY=0;
+let _cropBoxX=0,_cropBoxY=0,_cropBoxW=200,_cropBoxH=200;
 let _imgW=0,_imgH=0;
+let _cropDrag=false,_cropDragSX=0,_cropDragSY=0,_cropDragPX=0,_cropDragPY=0;
+let _cropPinchDist=0,_cropPinchScale=1;
 
 function openCropModal(src){
-  _cropRaw=src;_cropScale=1;_cropRot=0;_cropFlip=false;
+  _cropRaw=src;_cropScale=1;_cropRot=0;_cropFlipH=false;
   document.getElementById("crop-zoom").value=1;
   document.getElementById("crop-zoom-val").textContent="1×";
   const ci=document.getElementById("crop-img");
-  ci.onload=()=>{ _imgW=ci.naturalWidth;_imgH=ci.naturalHeight; initCropBox(); };
+  ci.onload=()=>{ _imgW=ci.naturalWidth;_imgH=ci.naturalHeight; initCrop(); };
   ci.src=src;
   document.getElementById("modal-crop").classList.add("open");
   document.getElementById("modal-pet").classList.remove("open");
@@ -1544,90 +1547,138 @@ function closeCropModal(){
   document.getElementById("modal-crop").classList.remove("open");
   document.getElementById("modal-pet").classList.add("open");
 }
-function initCropBox(){
+function initCrop(){
   const cont=document.getElementById("crop-container");
   const cW=cont.clientWidth,cH=cont.clientHeight;
+  // Fit image to container
   const s=Math.min(cW/_imgW,cH/_imgH,1);
   _cropScale=s;
-  document.getElementById("crop-zoom").min=s*0.5;
-  document.getElementById("crop-zoom").max=s*3;
-  document.getElementById("crop-zoom").value=s;
-  document.getElementById("crop-zoom-val").textContent=(1).toFixed(1)+"×";
-  positionImg();
+  const zEl=document.getElementById("crop-zoom");
+  zEl.min=s*0.5; zEl.max=s*6; zEl.value=s;
+  document.getElementById("crop-zoom-val").textContent="1.0×";
+  // Fixed crop box: centred square 70% of shorter side
   const size=Math.min(cW,cH)*0.7;
-  _cropX=(cW-size)/2;_cropY=(cH-size)/2;_cropW=size;_cropH=size;
+  _cropBoxW=size; _cropBoxH=size;
+  _cropBoxX=(cW-size)/2; _cropBoxY=(cH-size)/2;
   updateCropBox();
+  // Centre image in container
+  _cropPanX=(cW-_imgW*s)/2; _cropPanY=(cH-_imgH*s)/2;
+  applyImgTransform();
 }
-function positionImg(){
-  const cont=document.getElementById("crop-container");
+function applyImgTransform(){
   const ci=document.getElementById("crop-img");
-  const cW=cont.clientWidth,cH=cont.clientHeight;
-  // Use center-based transform so zooming stays anchored in the container
-  let tr=`translate(-50%,-50%) scale(${_cropScale})`;
-  if(_cropFlip)tr+=` scaleX(-1)`;
-  if(_cropRot)tr+=` rotate(${_cropRot}deg)`;
+  let tr=`translate(${_cropPanX}px,${_cropPanY}px) scale(${_cropScale})`;
+  if(_cropFlipH) tr+=` scaleX(-1)`;
+  if(_cropRot)   tr+=` rotate(${_cropRot}deg)`;
   ci.style.transform=tr;
-  ci.style.transformOrigin="center";
-  ci.style.left="50%";
-  ci.style.top="50%";
+  ci.style.transformOrigin="0 0";
   ci.style.width=_imgW+"px";
   ci.style.height=_imgH+"px";
 }
 function cropZoomChanged(){
+  const prev=_cropScale;
   _cropScale=parseFloat(document.getElementById("crop-zoom").value);
   const cont=document.getElementById("crop-container");
+  const cX=cont.clientWidth/2, cY=cont.clientHeight/2;
+  // Zoom toward container centre
+  _cropPanX=cX-(_cropScale/prev)*(cX-_cropPanX);
+  _cropPanY=cY-(_cropScale/prev)*(cY-_cropPanY);
   const baseS=Math.min(cont.clientWidth/_imgW,cont.clientHeight/_imgH,1);
-  document.getElementById("crop-zoom-val").textContent+="";
   document.getElementById("crop-zoom-val").textContent=(_cropScale/baseS).toFixed(1)+"×";
-  positionImg();
+  applyImgTransform();
 }
-function cropRotate(deg){_cropRot=(_cropRot+deg+360)%360;positionImg();}
-function cropFlip(){_cropFlip=!_cropFlip;positionImg();}
+function cropRotate(deg){_cropRot=(_cropRot+deg+360)%360;applyImgTransform();}
+function cropFlip(){_cropFlipH=!_cropFlipH;applyImgTransform();}
 function updateCropBox(){
   const box=document.getElementById("crop-box");
-  box.style.left=_cropX+"px";box.style.top=_cropY+"px";
-  box.style.width=_cropW+"px";box.style.height=_cropH+"px";
+  box.style.left=_cropBoxX+"px"; box.style.top=_cropBoxY+"px";
+  box.style.width=_cropBoxW+"px"; box.style.height=_cropBoxH+"px";
 }
 
-// Drag crop box
-const cropBox=document.getElementById("crop-box");
-cropBox.addEventListener("mousedown",e=>{_drag=true;_dragSX=e.clientX;_dragSY=e.clientY;_dragBX=_cropX;_dragBY=_cropY;e.preventDefault();});
-document.addEventListener("mousemove",e=>{
-  if(!_drag)return;
+// ── Drag image to pan ──
+(()=>{
   const cont=document.getElementById("crop-container");
-  _cropX=Math.max(0,Math.min(_dragBX+(e.clientX-_dragSX),cont.clientWidth-_cropW));
-  _cropY=Math.max(0,Math.min(_dragBY+(e.clientY-_dragSY),cont.clientHeight-_cropH));
-  updateCropBox();
-});
-document.addEventListener("mouseup",()=>{_drag=false;});
-// Touch support
-cropBox.addEventListener("touchstart",e=>{const t=e.touches[0];_drag=true;_dragSX=t.clientX;_dragSY=t.clientY;_dragBX=_cropX;_dragBY=_cropY;e.preventDefault();},{passive:false});
-document.addEventListener("touchmove",e=>{
-  if(!_drag)return;
-  const t=e.touches[0];
-  const cont=document.getElementById("crop-container");
-  _cropX=Math.max(0,Math.min(_dragBX+(t.clientX-_dragSX),cont.clientWidth-_cropW));
-  _cropY=Math.max(0,Math.min(_dragBY+(t.clientY-_dragSY),cont.clientHeight-_cropH));
-  updateCropBox();
-},{passive:false});
-document.addEventListener("touchend",()=>{_drag=false;});
+  // Mouse
+  cont.addEventListener("mousedown",e=>{
+    _cropDrag=true;_cropDragSX=e.clientX;_cropDragSY=e.clientY;
+    _cropDragPX=_cropPanX;_cropDragPY=_cropPanY;
+    cont.style.cursor="grabbing";e.preventDefault();
+  });
+  document.addEventListener("mousemove",e=>{
+    if(!_cropDrag)return;
+    _cropPanX=_cropDragPX+(e.clientX-_cropDragSX);
+    _cropPanY=_cropDragPY+(e.clientY-_cropDragSY);
+    applyImgTransform();
+  });
+  document.addEventListener("mouseup",()=>{_cropDrag=false;cont.style.cursor="grab";});
+  // Scroll to zoom
+  cont.addEventListener("wheel",e=>{
+    e.preventDefault();
+    const zEl=document.getElementById("crop-zoom");
+    const newVal=Math.min(parseFloat(zEl.max),Math.max(parseFloat(zEl.min),_cropScale-e.deltaY*0.002));
+    zEl.value=newVal;
+    cropZoomChanged();
+  },{passive:false});
+  // Touch: single-finger pan, two-finger pinch-zoom
+  cont.addEventListener("touchstart",e=>{
+    if(e.touches.length===1){
+      const t=e.touches[0];
+      _cropDrag=true;_cropDragSX=t.clientX;_cropDragSY=t.clientY;
+      _cropDragPX=_cropPanX;_cropDragPY=_cropPanY;
+    } else if(e.touches.length===2){
+      _cropDrag=false;
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      _cropPinchDist=Math.hypot(dx,dy);
+      _cropPinchScale=_cropScale;
+    }
+    e.preventDefault();
+  },{passive:false});
+  cont.addEventListener("touchmove",e=>{
+    if(e.touches.length===1&&_cropDrag){
+      const t=e.touches[0];
+      _cropPanX=_cropDragPX+(t.clientX-_cropDragSX);
+      _cropPanY=_cropDragPY+(t.clientY-_cropDragSY);
+      applyImgTransform();
+    } else if(e.touches.length===2){
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      const dist=Math.hypot(dx,dy);
+      const zEl=document.getElementById("crop-zoom");
+      const newVal=Math.min(parseFloat(zEl.max),Math.max(parseFloat(zEl.min),_cropPinchScale*(dist/_cropPinchDist)));
+      zEl.value=newVal;
+      cropZoomChanged();
+    }
+    e.preventDefault();
+  },{passive:false});
+  cont.addEventListener("touchend",e=>{if(e.touches.length===0)_cropDrag=false;});
+})();
 
 function applyCrop(){
   const ci=document.getElementById("crop-img");
-  const cont=document.getElementById("crop-container");
-  const cW=cont.clientWidth,cH=cont.clientHeight;
-  // Image is centred: its scaled top-left starts at (cW-dW)/2, (cH-dH)/2
-  const dW=_imgW*_cropScale,dH=_imgH*_cropScale;
-  const ox=(cW-dW)/2,oy=(cH-dH)/2;
-  const sx=(_cropX-ox)/_cropScale,sy=(_cropY-oy)/_cropScale;
-  const sw=_cropW/_cropScale,sh=_cropH/_cropScale;
+  // Map crop box corners back to original image pixels via pan+scale
+  // _cropPanX/Y is where the image top-left sits in the container
+  const sx=(_cropBoxX-_cropPanX)/_cropScale;
+  const sy=(_cropBoxY-_cropPanY)/_cropScale;
+  const sw=_cropBoxW/_cropScale;
+  const sh=_cropBoxH/_cropScale;
+  const OUT=300;
   const canvas=document.createElement("canvas");
-  const OUT=300;canvas.width=OUT;canvas.height=OUT;
+  canvas.width=OUT;canvas.height=OUT;
   const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#000";ctx.fillRect(0,0,OUT,OUT);
   ctx.save();
-  if(_cropFlip){ctx.translate(OUT,0);ctx.scale(-1,1);}
+  if(_cropFlipH){ctx.translate(OUT,0);ctx.scale(-1,1);}
   if(_cropRot){ctx.translate(OUT/2,OUT/2);ctx.rotate(_cropRot*Math.PI/180);ctx.translate(-OUT/2,-OUT/2);}
-  ctx.drawImage(ci,Math.max(0,sx),Math.max(0,sy),Math.min(sw,_imgW),Math.min(sh,_imgH),0,0,OUT,OUT);
+  // Clamp to image bounds, preserve position in output
+  const srcX=Math.max(0,sx),         srcY=Math.max(0,sy);
+  const srcX2=Math.min(sx+sw,_imgW),  srcY2=Math.min(sy+sh,_imgH);
+  const srcW=srcX2-srcX,              srcH=srcY2-srcY;
+  if(srcW>0&&srcH>0){
+    const dstX=(srcX-sx)/sw*OUT, dstY=(srcY-sy)/sh*OUT;
+    const dstW=srcW/sw*OUT,       dstH=srcH/sh*OUT;
+    ctx.drawImage(ci,srcX,srcY,srcW,srcH,dstX,dstY,dstW,dstH);
+  }
   ctx.restore();
   const _oldPetPhoto=ptPhotoData;
   ptPhotoData=canvas.toDataURL("image/jpeg",0.92);
