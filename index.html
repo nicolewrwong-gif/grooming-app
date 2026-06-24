@@ -1562,13 +1562,14 @@ function positionImg(){
   const cont=document.getElementById("crop-container");
   const ci=document.getElementById("crop-img");
   const cW=cont.clientWidth,cH=cont.clientHeight;
-  const dW=_imgW*_cropScale,dH=_imgH*_cropScale;
-  const ox=(cW-dW)/2,oy=(cH-dH)/2;
-  let tr=`translate(${ox}px,${oy}px) scale(${_cropScale})`;
+  // Use center-based transform so zooming stays anchored in the container
+  let tr=`translate(-50%,-50%) scale(${_cropScale})`;
   if(_cropFlip)tr+=` scaleX(-1)`;
   if(_cropRot)tr+=` rotate(${_cropRot}deg)`;
   ci.style.transform=tr;
-  ci.style.transformOrigin="top left";
+  ci.style.transformOrigin="center";
+  ci.style.left="50%";
+  ci.style.top="50%";
   ci.style.width=_imgW+"px";
   ci.style.height=_imgH+"px";
 }
@@ -1615,7 +1616,7 @@ function applyCrop(){
   const ci=document.getElementById("crop-img");
   const cont=document.getElementById("crop-container");
   const cW=cont.clientWidth,cH=cont.clientHeight;
-  // Work out what portion of the original image the crop box covers
+  // Image is centred: its scaled top-left starts at (cW-dW)/2, (cH-dH)/2
   const dW=_imgW*_cropScale,dH=_imgH*_cropScale;
   const ox=(cW-dW)/2,oy=(cH-dH)/2;
   const sx=(_cropX-ox)/_cropScale,sy=(_cropY-oy)/_cropScale;
