@@ -1537,11 +1537,15 @@ function openCropModal(src){
   _cropRaw=src;_cropScale=1;_cropRot=0;_cropFlipH=false;
   document.getElementById("crop-zoom").value=1;
   document.getElementById("crop-zoom-val").textContent="1×";
-  const ci=document.getElementById("crop-img");
-  ci.onload=()=>{ _imgW=ci.naturalWidth;_imgH=ci.naturalHeight; initCrop(); };
-  ci.src=src;
+  // Show modal first so the container has real layout dimensions
   document.getElementById("modal-crop").classList.add("open");
   document.getElementById("modal-pet").classList.remove("open");
+  const ci=document.getElementById("crop-img");
+  // Clear src first so onload always fires, even for the same image
+  ci.src="";
+  ci.onload=()=>{ _imgW=ci.naturalWidth;_imgH=ci.naturalHeight; initCrop(); };
+  // Defer setting src until the modal is painted and clientWidth is valid
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ ci.src=src; }); });
 }
 function closeCropModal(){
   document.getElementById("modal-crop").classList.remove("open");
