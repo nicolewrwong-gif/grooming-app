@@ -311,7 +311,7 @@ const BREEDS=[
   "Bernese Mountain Dog","Bichon Frise","Border Collie","Border Terrier","Boston Terrier",
   "Boxer","Bull Arab","Bull Mastiff","Bulldog","Bull Terrier","Cane Corso","Cavalier","Chihuahua","Chow Chow","Cocker Spaniel","Corgi",
   "Dachshund","Dalmatian","Dobermann","English Bulldog","French Bulldog","German Shepherd","Golden Retriever",
-  "Great Dane","Greyhound","Unknown","Unknown mix","Havanese","Husky","Jack Russell","Kelpie","Labrador",
+  "Great Dane","Greyhound","Unknown","Havanese","Husky","Jack Russell","Kelpie","Labrador",
   "Lhasa Apso","Maltese","Maremma","Miniature Schnauzer","Mixed breed","Newfoundland","Papillon","Pekingese","Pomeranian","Poodle","Pug",
   "Rhodesian Ridgeback","Rottweiler","Samoyed","Shar Pei","Shetland Sheepdog","Shih Tzu","Springer Spaniel","Staffy",
   "Vizsla","Weimaraner","West Highland Terrier","Whippet","Yorkshire Terrier"
@@ -327,12 +327,13 @@ const POODLE_MIX_NAMES={
 };
 // Given a stored breed string (e.g. "Poodle X Golden Retriever"), return the common
 // Australian designer-breed name for display if it's a recognised Poodle mix, and render
-// pairings with "Unknown mix" as a trailing "X" (e.g. "Beagle X Unknown mix" -> "Beagle X").
+// pairings with "Unknown" as a trailing "X" (e.g. "Beagle X Unknown" -> "Beagle X").
+// If "Unknown" is the only breed selected, it's shown as "Unknown" on its own.
 function displayBreed(breedStr){
   if(!breedStr)return breedStr;
   const parts=breedStr.split(" X ").map(s=>s.trim()).filter(Boolean);
-  const hasUnknownMix=parts.includes("Unknown mix");
-  const namedParts=parts.filter(p=>p!=="Unknown mix");
+  const namedParts=parts.filter(p=>p!=="Unknown");
+  const hasUnknownMix=namedParts.length<parts.length&&namedParts.length>0;
   if(namedParts.length===2){
     const poodleIdx=namedParts.findIndex(p=>p==="Poodle");
     if(poodleIdx!==-1){
@@ -340,7 +341,7 @@ function displayBreed(breedStr){
       if(POODLE_MIX_NAMES[other])return POODLE_MIX_NAMES[other]+(hasUnknownMix?" X":"");
     }
   }
-  if(hasUnknownMix)return namedParts.length?namedParts.join(" X ")+" X":"Unknown mix";
+  if(hasUnknownMix)return namedParts.join(" X ")+" X";
   return breedStr;
 }
 
