@@ -307,13 +307,13 @@ const SIZE_MULT={"Mini":1,"Small":1,"Medium":1,"Large":1.2,"Extra large":1.4};
 const SIZE_DUR={"Mini":-10,"Small":0,"Medium":0,"Large":15,"Extra large":30};
 const BEHAVIOUR_TRAITS=["Food motivated","Friendly","Good with Bruce","Good with handling","High energy","Patient / tolerant","Timid","Vocal","Eats air","Sensitive feet","Sitter","Table active","Anxious","Fear of clippers","Head sensitive","Noise sensitive","Separation anxiety","Bite risk","Escape risk","Flight risk","Resists handling","Requires breaks","Requires multiple sessions","Requires muzzle"];
 const BREEDS=[
-  "American Staffordshire Terrier","Australian Shepherd","Australian Terrier","Basset Hound","Beagle","Beagle X",
+  "American Staffordshire Terrier","Australian Shepherd","Australian Terrier","Basset Hound","Beagle",
   "Bernese Mountain Dog","Bichon Frise","Border Collie","Border Terrier","Boston Terrier",
   "Boxer","Bull Arab","Bull Mastiff","Bulldog","Bull Terrier","Cane Corso","Cavalier","Chihuahua","Chow Chow","Cocker Spaniel","Corgi",
   "Dachshund","Dalmatian","Dobermann","English Bulldog","French Bulldog","German Shepherd","Golden Retriever",
-  "Great Dane","Greyhound","Unknown","Havanese","Husky","Jack Russell","Kelpie","Kelpie X","Labrador","Lab X",
+  "Great Dane","Greyhound","Unknown","Unknown mix","Havanese","Husky","Jack Russell","Kelpie","Labrador",
   "Lhasa Apso","Maltese","Maremma","Miniature Schnauzer","Mixed breed","Newfoundland","Papillon","Pekingese","Pomeranian","Poodle","Pug",
-  "Retriever X","Rhodesian Ridgeback","Rottweiler","Samoyed","Shar Pei","Shetland Sheepdog","Shih Tzu","Springer Spaniel","Staffy","Staffy X",
+  "Rhodesian Ridgeback","Rottweiler","Samoyed","Shar Pei","Shetland Sheepdog","Shih Tzu","Springer Spaniel","Staffy",
   "Vizsla","Weimaraner","West Highland Terrier","Whippet","Yorkshire Terrier"
 ].sort((a,b)=>a.localeCompare(b));
 
@@ -321,22 +321,26 @@ const BREEDS=[
 const POODLE_MIX_NAMES={
   "Bichon Frise":"Poochon","Border Collie":"Bordoodle","Bernese Mountain Dog":"Bernedoodle",
   "Cavalier":"Cavoodle","Cocker Spaniel":"Spoodle","Golden Retriever":"Groodle",
-  "Havanese":"Havapoo","Labrador":"Labradoodle","Lab X":"Labradoodle","Maltese":"Moodle",
+  "Havanese":"Havapoo","Labrador":"Labradoodle","Maltese":"Moodle",
   "Miniature Schnauzer":"Schnoodle","Pug":"Pugapoo","Shih Tzu":"Shihpoo",
   "West Highland Terrier":"Westiepoo"
 };
 // Given a stored breed string (e.g. "Poodle X Golden Retriever"), return the common
-// Australian designer-breed name for display if it's a recognised Poodle mix, else the original string.
+// Australian designer-breed name for display if it's a recognised Poodle mix, and render
+// pairings with "Unknown mix" as a trailing "X" (e.g. "Beagle X Unknown mix" -> "Beagle X").
 function displayBreed(breedStr){
   if(!breedStr)return breedStr;
   const parts=breedStr.split(" X ").map(s=>s.trim()).filter(Boolean);
-  if(parts.length===2){
-    const poodleIdx=parts.findIndex(p=>p==="Poodle");
+  const hasUnknownMix=parts.includes("Unknown mix");
+  const namedParts=parts.filter(p=>p!=="Unknown mix");
+  if(namedParts.length===2){
+    const poodleIdx=namedParts.findIndex(p=>p==="Poodle");
     if(poodleIdx!==-1){
-      const other=parts[1-poodleIdx];
-      if(POODLE_MIX_NAMES[other])return POODLE_MIX_NAMES[other];
+      const other=namedParts[1-poodleIdx];
+      if(POODLE_MIX_NAMES[other])return POODLE_MIX_NAMES[other]+(hasUnknownMix?" X":"");
     }
   }
+  if(hasUnknownMix)return namedParts.length?namedParts.join(" X ")+" X":"Unknown mix";
   return breedStr;
 }
 
