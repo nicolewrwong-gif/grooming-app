@@ -205,6 +205,11 @@ tr:hover td{background:#fafbfc}
     <select id="pt-breed-select" onchange="ptAddBreed(this.value)" style="width:100%">
       <option value="">Select breed...</option>
     </select>
+    <div id="pt-brachy-toggle" style="display:none;margin-top:6px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer">
+        <input type="checkbox" id="pt-hide-brachy" style="margin:0;width:auto"/> Don't show "Brachy" label for this pet
+      </label>
+    </div>
   </div>
 </div>
 <div class="grid2">
@@ -302,17 +307,38 @@ const SIZE_MULT={"Mini":1,"Small":1,"Medium":1,"Large":1.2,"Extra large":1.4};
 const SIZE_DUR={"Mini":-10,"Small":0,"Medium":0,"Large":15,"Extra large":30};
 const BEHAVIOUR_TRAITS=["Food motivated","Friendly","Good with Bruce","Good with handling","High energy","Patient / tolerant","Timid","Vocal","Eats air","Sensitive feet","Sitter","Table active","Anxious","Fear of clippers","Head sensitive","Noise sensitive","Separation anxiety","Bite risk","Escape risk","Flight risk","Resists handling","Requires breaks","Requires multiple sessions","Requires muzzle"];
 const BREEDS=[
-  "Australian Shepherd","Australian Terrier","Beagle","Beagle X","Border Collie","Border Terrier",
-  "Boxer","Bull Arab","Bulldog","Bull Terrier","Cavalier","Chihuahua","Chow Chow","Cocker Spaniel",
-  "Dachshund","Dalmatian","Dobermann","French Bulldog","German Shepherd","Golden Retriever",
-  "Great Dane","Greyhound","Unknown","Husky","Jack Russell","Kelpie","Kelpie X","Labrador","Lab X",
-  "Maltese","Maremma","Miniature Schnauzer","Mixed breed","Pomeranian","Poodle","Pug",
-  "Retriever X","Rottweiler","Samoyed","Shih Tzu","Springer Spaniel","Spoodle","Staffy","Staffy X",
-  "Vizsla","Weimaraner","Whippet","Yorkshire Terrier",
-  "Bernedoodle","Bordoodle","Cavoodle","Cockerpoo","Groodle","Havapoo","Labradoodle",
-  "Maltipoo","Moodle","Poochon","Pugapoo","Schnoodle","Shihpoo","Toy Cavoodle",
-  "Toy Groodle","Toy Labradoodle","Westiepoo"
+  "American Staffordshire Terrier","Australian Shepherd","Australian Terrier","Basset Hound","Beagle","Beagle X",
+  "Bernese Mountain Dog","Bichon Frise","Border Collie","Border Terrier","Boston Terrier",
+  "Boxer","Bull Arab","Bull Mastiff","Bulldog","Bull Terrier","Cane Corso","Cavalier","Chihuahua","Chow Chow","Cocker Spaniel","Corgi",
+  "Dachshund","Dalmatian","Dobermann","English Bulldog","French Bulldog","German Shepherd","Golden Retriever",
+  "Great Dane","Greyhound","Unknown","Havanese","Husky","Jack Russell","Kelpie","Kelpie X","Labrador","Lab X",
+  "Lhasa Apso","Maltese","Maremma","Miniature Schnauzer","Mixed breed","Newfoundland","Papillon","Pekingese","Pomeranian","Poodle","Pug",
+  "Retriever X","Rhodesian Ridgeback","Rottweiler","Samoyed","Shar Pei","Shetland Sheepdog","Shih Tzu","Springer Spaniel","Staffy","Staffy X",
+  "Vizsla","Weimaraner","West Highland Terrier","Whippet","Yorkshire Terrier"
 ].sort((a,b)=>a.localeCompare(b));
+
+// Common Australian poodle-mix (designer breed) display names, keyed by the non-Poodle breed
+const POODLE_MIX_NAMES={
+  "Bichon Frise":"Poochon","Border Collie":"Bordoodle","Bernese Mountain Dog":"Bernedoodle",
+  "Cavalier":"Cavoodle","Cocker Spaniel":"Spoodle","Golden Retriever":"Groodle",
+  "Havanese":"Havapoo","Labrador":"Labradoodle","Lab X":"Labradoodle","Maltese":"Moodle",
+  "Miniature Schnauzer":"Schnoodle","Pug":"Pugapoo","Shih Tzu":"Shihpoo",
+  "West Highland Terrier":"Westiepoo"
+};
+// Given a stored breed string (e.g. "Poodle X Golden Retriever"), return the common
+// Australian designer-breed name for display if it's a recognised Poodle mix, else the original string.
+function displayBreed(breedStr){
+  if(!breedStr)return breedStr;
+  const parts=breedStr.split(" X ").map(s=>s.trim()).filter(Boolean);
+  if(parts.length===2){
+    const poodleIdx=parts.findIndex(p=>p==="Poodle");
+    if(poodleIdx!==-1){
+      const other=parts[1-poodleIdx];
+      if(POODLE_MIX_NAMES[other])return POODLE_MIX_NAMES[other];
+    }
+  }
+  return breedStr;
+}
 
 let ptSelectedBreeds=[];
 
@@ -331,13 +357,21 @@ function ptInitBreeds(){
 function ptAddBreed(val){
   if(!val||ptSelectedBreeds.includes(val))return;
   ptSelectedBreeds.push(val);
-  ptRenderBreedTags();ptInitBreeds();
+  ptRenderBreedTags();ptInitBreeds();ptUpdateBrachyToggle();
   document.getElementById("pt-breed-select").value="";
 }
 
 function ptRemoveBreed(idx){
   ptSelectedBreeds.splice(idx,1);
-  ptRenderBreedTags();ptInitBreeds();
+  ptRenderBreedTags();ptInitBreeds();ptUpdateBrachyToggle();
+}
+
+function ptUpdateBrachyToggle(){
+  const el=document.getElementById("pt-brachy-toggle");
+  if(!el)return;
+  const show=isBrachy(ptGetBreedString());
+  el.style.display=show?"block":"none";
+  if(!show)document.getElementById("pt-hide-brachy").checked=false;
 }
 
 function ptRenderBreedTags(){
@@ -373,6 +407,7 @@ const COAT_TYPES=["Curly Coat","Silky Coat","Wire Coat","Double Coat","Smooth Co
 const SPECIAL_HANDLING_TRAITS=["Requires multiple sessions","Requires breaks","Requires muzzle"];
 const BADGE_STYLE={confirmed:{bg:"#EAF7EE",color:"#5BAF7A"},pending:{bg:"#FAEEDA",color:"#854F0B"},done:{bg:"#E6F1FB",color:"#185FA5"},cancelled:{bg:"#FDECEA",color:"#E8534A"}};
 
+const lastName=n=>{if(!n)return"";const parts=n.trim().split(/\s+/);return parts[parts.length-1];};
 const pad=n=>String(n).padStart(2,"0");
 const todayStr=()=>{const t=new Date();return`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;};
 const fmtDate=d=>{if(!d)return"—";const[y,m,day]=d.split("-");return`${day}/${m}/${y}`;};
@@ -681,10 +716,10 @@ function renderDashboard(){
     nextHtml=`<div class="card" style="text-align:center;color:#888">No upcoming appointments.</div>`;
   } else {
     const pet=petById(next.petId),owner=ownerById(next.ownerId);
-    const brachy=pet&&isBrachy(pet.breed)?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:8px">Brachy</span>`:"";
+    const brachy=pet&&isBrachy(pet.breed)&&!pet.hideBrachy?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:8px">Brachy</span>`:"";
     const behTags=(pet?.behaviour||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)).map(t=>{const c=behColor(t);return tag(t,c.bg,c.text);}).join("");
     const petPhoto=pet?.photo?`<img src="${pet.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="font-size:24px">🐾</div>`;
-    nextHtml=`<div class="card"><div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${petPhoto}<div style="flex:1"><div style="font-size:14px;font-weight:500">${pet?.name||"?"} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${pet?.breed||""}</span>${brachy}</div><div style="font-size:12px;color:#888">${owner?.name||"?"} &middot; ${owner?.phone||""}</div></div>${badge(next.status)}</div><div style="font-size:13px;margin-bottom:8px"><strong>${next.service}</strong>${(next.addOns||[]).length?" + "+next.addOns.join(", "):""} — ${fmtDate(next.date)} at ${fmtTime(next.time)}</div>${specialHandlingBox(pet,8)}${(()=>{const prevDone=[...bookings].filter(b=>b.petId===next.petId&&b.status==="done"&&b.nextnote).sort((a,b2)=>b2.date.localeCompare(a.date)||b2.time.localeCompare(a.time))[0];return prevDone?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:12px;color:#92400E;margin-bottom:8px;white-space:pre-wrap"><strong>For next time:</strong> ${prevDone.nextnote}</div>`:"";})()} <br>${behTags?`<div style="margin-bottom:10px">${behTags}</div>`:""}${(()=>{const lastBk=bookings.filter(b=>b.petId===next.petId&&b.id!==next.id&&b.status==="done"&&(b.products||[]).length).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))[0];return lastBk?`<div style="background:#EEF6FF;border-radius:6px;padding:6px 10px;font-size:11px;margin-bottom:8px"><span style="color:#185FA5;font-weight:600">Products last visit</span><br>${(lastBk.products||[]).map(p=>`<span style="display:inline-block;background:#D4EBFF;color:#185FA5;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;margin-right:3px">${p}</span>`).join("")}</div>`:"";})()}</div><div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;justify-content:flex-start"><button class="primary" onclick="markBkStatus(${next.id},'done')" style="padding:9px 18px;font-size:13px;background:#95ddbc;border-color:#95ddbc;color:#1a4a2e;box-shadow:0 3px 8px rgba(149,221,188,0.4)">Done</button><button class="primary" onclick="markBkStatus(${next.id},'cancelled')" style="padding:9px 18px;font-size:13px;background:#E8534A;border-color:#E8534A;box-shadow:0 3px 8px rgba(232,83,74,0.28)">Cancelled</button></div></div></div>`;
+    nextHtml=`<div class="card"><div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${petPhoto}<div style="flex:1"><div style="font-size:14px;font-weight:500">${pet?.name||"?"} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${displayBreed(pet?.breed)||""}</span>${brachy}</div><div style="font-size:12px;color:#888">${owner?.name||"?"} &middot; ${owner?.phone||""}</div></div>${badge(next.status)}</div><div style="font-size:13px;margin-bottom:8px"><strong>${next.service}</strong>${(next.addOns||[]).length?" + "+next.addOns.join(", "):""} — ${fmtDate(next.date)} at ${fmtTime(next.time)}</div>${specialHandlingBox(pet,8)}${(()=>{const prevDone=[...bookings].filter(b=>b.petId===next.petId&&b.status==="done"&&b.nextnote).sort((a,b2)=>b2.date.localeCompare(a.date)||b2.time.localeCompare(a.time))[0];return prevDone?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:12px;color:#92400E;margin-bottom:8px;white-space:pre-wrap"><strong>For next time:</strong> ${prevDone.nextnote}</div>`:"";})()} <br>${behTags?`<div style="margin-bottom:10px">${behTags}</div>`:""}${(()=>{const lastBk=bookings.filter(b=>b.petId===next.petId&&b.id!==next.id&&b.status==="done"&&(b.products||[]).length).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))[0];return lastBk?`<div style="background:#EEF6FF;border-radius:6px;padding:6px 10px;font-size:11px;margin-bottom:8px"><span style="color:#185FA5;font-weight:600">Products last visit</span><br>${(lastBk.products||[]).map(p=>`<span style="display:inline-block;background:#D4EBFF;color:#185FA5;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;margin-right:3px">${p}</span>`).join("")}</div>`:"";})()}</div><div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;justify-content:flex-start"><button class="primary" onclick="markBkStatus(${next.id},'done')" style="padding:9px 18px;font-size:13px;background:#95ddbc;border-color:#95ddbc;color:#1a4a2e;box-shadow:0 3px 8px rgba(149,221,188,0.4)">Done</button><button class="primary" onclick="markBkStatus(${next.id},'cancelled')" style="padding:9px 18px;font-size:13px;background:#E8534A;border-color:#E8534A;box-shadow:0 3px 8px rgba(232,83,74,0.28)">Cancelled</button></div></div></div>`;
   }
   let upcomingMore="";
   if(upcoming.length>1){
@@ -706,7 +741,7 @@ function renderBookings(){
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div>
               <div style="font-weight:500;font-size:13px">${owner?.name||"—"} <span style="color:#888;font-weight:400">&middot; ${owner?.phone||""}</span></div>
-              <div style="font-size:12px;color:#888;margin-top:1px"><strong style="color:var(--text)">${pet?.name||"—"}</strong> &middot; ${pet?.breed||""}</div>
+              <div style="font-size:12px;color:#888;margin-top:1px"><strong style="color:var(--text)">${pet?.name||"—"}</strong> &middot; ${displayBreed(pet?.breed)||""}</div>
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${badge(b.status)}<button class="sm" onclick="editBk(${b.id})">&#9998;</button><button class="sm" onclick="deleteBk(${b.id})">&#128465;</button></div>
           </div>
@@ -771,12 +806,12 @@ function renderPets(){
   const rows=[...pets].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>{
     const linkedOwners=owners.filter(o=>p.ownerIds.includes(o.id));
     const last=bookings.filter(b=>b.petId===p.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
-    const brachy=isBrachy(p.breed)?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:6px">Brachy</span>`:"";
+    const brachy=isBrachy(p.breed)&&!p.hideBrachy?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:6px">Brachy</span>`:"";
     const behTags=sortBehTraits((p.behaviour||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)&&BEHAVIOUR_TRAITS.includes(t))).map(t=>{const c=behColor(t);return tag(t,c.bg,c.text);}).join("");
     const medTags=(p.medicalTags||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)&&MEDICAL_TAGS.includes(t)).map(t=>{const c=medColor(t);return tag(t,c.bg,c.text);}).join("");
     const coatTags=(p.coatTypes||[]).filter(t=>COAT_TYPES.includes(t)).map(t=>tag(t,"#F0F0F0","#444")).join("");
     const photoEl=p.photo?`<img src="${p.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:44px;height:44px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🐾</div>`;
-    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${photoEl}<div style="flex:1"><div style="font-size:14px;font-weight:500">${p.name} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${p.breed}</span>${brachy}</div>${specialHandlingBox(p,4,4)}<div style="font-size:12px;color:#888;margin-top:2px">${p.sex} &middot; ${p.desexed?"Desexed":"Not desexed"} &middot; ${p.size} &middot; Age ${fmtAge(p.dob,p.approxAge)}</div>${coatTags?`<div style="margin-top:4px">${coatTags}</div>`:""}<div style="margin-top:4px">${behTags}</div>${(medTags||p.medicalNotes)?`<div style="background:#FDECEB;border-radius:6px;padding:5px 8px;font-size:11px;color:#E8534A;margin-top:6px"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:5px"><span style="font-weight:600;white-space:nowrap">Medical:</span>${medTags}</div>${p.medicalNotes?`<div style="white-space:pre-wrap;margin-top:3px">${p.medicalNotes}</div>`:""}</div>`:""}${p.preferredStyle?`<div style="font-size:11px;color:#888;margin-top:4px"><strong>Preferred style:</strong> ${p.preferredStyle}</div>`:""}${p.lastNote?`<div style="background:#FAEEDA;border-radius:6px;padding:5px 8px;font-size:11px;color:#854F0B;margin-top:6px;white-space:pre-wrap">${p.lastNote}</div>`:""}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="sm" onclick="editPet(${p.id})">&#9998;</button><button class="sm" onclick="deletePet(${p.id})">&#128465;</button></div></div><div style="margin-top:6px;padding-left:54px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><span style="font-size:11px;color:#888">Last: ${last?`${fmtDate(last.date)} &middot; ${last.service}`:"—"}</span><span style="font-size:11px;color:#888">Owners: ${linkedOwners.map(o=>o.name).join(", ")||"—"}</span></div></div>`;
+    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${photoEl}<div style="flex:1"><div style="font-size:14px;font-weight:500">${p.name} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${displayBreed(p.breed)}</span>${brachy}</div>${specialHandlingBox(p,4,4)}<div style="font-size:12px;color:#888;margin-top:2px">${p.sex} &middot; ${p.desexed?"Desexed":"Not desexed"} &middot; ${p.size} &middot; Age ${fmtAge(p.dob,p.approxAge)}</div>${coatTags?`<div style="margin-top:4px">${coatTags}</div>`:""}<div style="margin-top:4px">${behTags}</div>${(medTags||p.medicalNotes)?`<div style="background:#FDECEB;border-radius:6px;padding:5px 8px;font-size:11px;color:#E8534A;margin-top:6px"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:5px"><span style="font-weight:600;white-space:nowrap">Medical:</span>${medTags}</div>${p.medicalNotes?`<div style="white-space:pre-wrap;margin-top:3px">${p.medicalNotes}</div>`:""}</div>`:""}${p.preferredStyle?`<div style="font-size:11px;color:#888;margin-top:4px"><strong>Preferred style:</strong> ${p.preferredStyle}</div>`:""}${p.lastNote?`<div style="background:#FAEEDA;border-radius:6px;padding:5px 8px;font-size:11px;color:#854F0B;margin-top:6px;white-space:pre-wrap">${p.lastNote}</div>`:""}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="sm" onclick="editPet(${p.id})">&#9998;</button><button class="sm" onclick="deletePet(${p.id})">&#128465;</button></div></div><div style="margin-top:6px;padding-left:54px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><span style="font-size:11px;color:#888">Last: ${last?`${fmtDate(last.date)} &middot; ${last.service}`:"—"}</span><span style="font-size:11px;color:#888">Owners: ${linkedOwners.map(o=>o.name).join(", ")||"—"}</span></div></div>`;
   }).join("");
   return`<div class="search-row"><span style="font-size:14px;font-weight:500">Pet profiles</span><div class="right"><button class="accent" onclick="openPtModal(null)">+ New pet</button></div></div>${rows||`<p style="text-align:center;color:#888;padding:2rem">No pets yet.</p>`}`;
 }
@@ -1130,7 +1165,7 @@ function openBkModal(b){
   document.getElementById("bk-title").textContent=b?"Edit booking":"New booking";
   // Populate all pets (sorted alphabetically)
   const petSel=document.getElementById("bk-pet");
-  petSel.innerHTML=`<option value="">Select pet...</option>`+[...pets].sort((a,z)=>a.name.localeCompare(z.name)).map(p=>{const ow=owners.find(o=>p.ownerIds.includes(o.id));return`<option value="${p.id}">${p.name} — ${p.breed}${ow?" ("+ow.name+")":""}`;}).join("");
+  petSel.innerHTML=`<option value="">Select pet...</option>`+[...pets].sort((a,z)=>a.name.localeCompare(z.name)).map(p=>{const ow=owners.find(o=>p.ownerIds.includes(o.id));return`<option value="${p.id}">${p.name} — ${displayBreed(p.breed)}${ow?" ("+ow.name+")":""}`;}).join("");
   document.getElementById("bk-service").innerHTML=SERVICES.map(s=>`<option>${s}</option>`).join("");
   document.getElementById("bk-service").value=b?.service||"Full groom";
   document.getElementById("bk-date").value=b?.date||todayStr();
@@ -1351,6 +1386,8 @@ function openPtModal(pet){
   // Load breeds
   ptSelectedBreeds=pet?.breed?pet.breed.split(" X ").map(s=>s.trim()).filter(Boolean):[];
   ptRenderBreedTags();ptInitBreeds();
+  document.getElementById("pt-hide-brachy").checked=pet?.hideBrachy||false;
+  ptUpdateBrachyToggle();
   // Load approx age
   const isApprox=pet?.approxAge||false;
   document.getElementById("pt-approx-age").checked=isApprox;
@@ -1407,7 +1444,7 @@ async function savePtModal(){
     if(url)ptPhotoData=url;
     _pendingPetPhotoUpload=null;
   }
-  const obj={name,breed,dob:dob,approxAge:approxAge,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim()};
+  const obj={name,breed,dob:dob,approxAge:approxAge,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim(),hideBrachy:document.getElementById("pt-hide-brachy").checked};
   if(ptEditing){pets=pets.map(p=>p.id===ptEditing.id?{...p,...obj}:p);}else{pets.push({id:nextPetId++,...obj});}
   save();closePtModal();render();
 }
