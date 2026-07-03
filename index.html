@@ -212,8 +212,9 @@ tr:hover td{background:#fafbfc}
     </div>
     <div id="pt-oodle-wrap" style="display:none;margin-top:6px">
       <label class="lbl" style="margin-bottom:2px">Oodle mix name to show on card</label>
-      <input type="text" id="pt-oodle-name" list="pt-oodle-suggestions" placeholder="e.g. Shih-Westiepoo" style="width:100%"/>
-      <datalist id="pt-oodle-suggestions"></datalist>
+      <select id="pt-oodle-name" style="width:100%">
+        <option value="">Show full breed names</option>
+      </select>
     </div>
   </div>
 </div>
@@ -395,14 +396,26 @@ function ptUpdateBrachyToggle(){
 function ptUpdateOodleOptions(){
   const wrap=document.getElementById("pt-oodle-wrap");
   if(!wrap)return;
+  const sel=document.getElementById("pt-oodle-name");
   const named=ptSelectedBreeds.filter(b=>b!=="Unknown");
   const poodleIdx=named.indexOf("Poodle");
   const others=poodleIdx===-1?[]:named.filter((b,i)=>i!==poodleIdx);
   const show=poodleIdx!==-1&&others.length>=2;
   wrap.style.display=show?"block":"none";
-  if(!show){document.getElementById("pt-oodle-name").value="";return;}
-  const dl=document.getElementById("pt-oodle-suggestions");
-  dl.innerHTML=others.map(o=>POODLE_MIX_NAMES[o]).filter(Boolean).map(n=>`<option value="${n}">`).join("");
+  if(!show){sel.innerHTML='<option value="">Show full breed names</option>';return;}
+  const current=sel.value;
+  // For each "other" breed with a known Poodle-mix name, offer combining that breed with
+  // Poodle into its designer name, keeping the remaining breed(s) as plain names.
+  // e.g. Shih Tzu + Poodle + West Highland White Terrier ->
+  //   "Shihpoo + West Highland White Terrier" or "Westiepoo + Shih Tzu"
+  const choices=others.map((o,i)=>{
+    const mix=POODLE_MIX_NAMES[o];
+    if(!mix)return null;
+    const rest=others.filter((_,j)=>j!==i);
+    return mix+" + "+rest.join(" + ");
+  }).filter(Boolean);
+  sel.innerHTML='<option value="">Show full breed names</option>'+choices.map(c=>`<option value="${c}">${c}</option>`).join("");
+  if(choices.includes(current))sel.value=current;
 }
 
 function ptRenderBreedTags(){
