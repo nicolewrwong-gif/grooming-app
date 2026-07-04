@@ -312,6 +312,45 @@ const BEH_DUR_TRAITS=["Anxious","Separation anxiety","Fear of clippers","Resists
 const SIZE_MULT={"Mini":1,"Small":1,"Medium":1,"Large":1.2,"Extra large":1.4};
 const SIZE_DUR={"Mini":-10,"Small":0,"Medium":0,"Large":15,"Extra large":30};
 const BEHAVIOUR_TRAITS=["Food motivated","Friendly","Good with Bruce","Good with handling","High energy","Patient / tolerant","Timid","Vocal","Eats air","Sensitive feet","Sitter","Table active","Anxious","Fear of clippers","Head sensitive","Noise sensitive","Separation anxiety","Bite risk","Escape risk","Flight risk","Resists handling","Requires breaks","Requires multiple sessions","Requires muzzle"];
+// Legacy breed name migration: earlier versions of this list used shorthand names, "(breed) X"
+// entries, "Unknown mix", and hardcoded designer-mix nicknames as selectable breeds. Any pet
+// saved under those older names needs to keep resolving correctly, so we normalise old tokens
+// to their current equivalents before doing any matching/display logic.
+const BREED_ALIASES={ // old single-breed shorthand -> current full name
+  "Cavalier":"Cavalier King Charles Spaniel","Staffy":"Staffordshire Bull Terrier","Husky":"Siberian Husky",
+  "Corgi":"Pembroke Welsh Corgi","Kelpie":"Australian Kelpie","Shar Pei":"Chinese Shar Pei",
+  "West Highland Terrier":"West Highland White Terrier","Bull Mastiff":"Bullmastiff","Vizsla":"Hungarian Vizsla",
+  "Labrador":"Labrador Retriever","German Shepherd":"German Shepherd Dog","Springer Spaniel":"English Springer Spaniel",
+  "Jack Russell":"Jack Russell Terrier","Dobermann":"Dobermann Pinscher","Maremma":"Maremma Sheepdog"
+};
+const BREED_EXPAND_ALIASES={ // old token -> tokens it expands into
+  "Beagle X":["Beagle","Unknown"],"Kelpie X":["Australian Kelpie","Unknown"],"Lab X":["Labrador Retriever","Unknown"],
+  "Retriever X":["Golden Retriever","Unknown"],"Staffy X":["Staffordshire Bull Terrier","Unknown"],
+  "Unknown mix":["Unknown"],
+  "Bernedoodle":["Poodle","Bernese Mountain Dog"],"Bordoodle":["Poodle","Border Collie"],
+  "Cavoodle":["Poodle","Cavalier King Charles Spaniel"],"Cockerpoo":["Poodle","Cocker Spaniel"],
+  "Groodle":["Poodle","Golden Retriever"],"Havapoo":["Poodle","Havanese"],
+  "Labradoodle":["Poodle","Labrador Retriever"],"Maltipoo":["Poodle","Maltese"],"Moodle":["Poodle","Maltese"],
+  "Poochon":["Poodle","Bichon Frise"],"Pugapoo":["Poodle","Pug"],"Schnoodle":["Poodle","Miniature Schnauzer"],
+  "Shihpoo":["Poodle","Shih Tzu"],"Spoodle":["Poodle","Cocker Spaniel"],
+  "Toy Cavoodle":["Poodle","Cavalier King Charles Spaniel"],"Toy Groodle":["Poodle","Golden Retriever"],
+  "Toy Labradoodle":["Poodle","Labrador Retriever"],"Westiepoo":["Poodle","West Highland White Terrier"]
+};
+function canonicalBreedTokens(tok){
+  if(BREED_ALIASES[tok])return[BREED_ALIASES[tok]];
+  if(BREED_EXPAND_ALIASES[tok])return BREED_EXPAND_ALIASES[tok];
+  return[tok];
+}
+// Normalises a stored breed string (which may use an older naming scheme) into the current
+// canonical " X "-joined breed string, deduping any repeated tokens the migration introduces.
+function canonicalizeBreedString(breedStr){
+  if(!breedStr)return breedStr;
+  const raw=breedStr.split(" X ").map(s=>s.trim()).filter(Boolean);
+  const tokens=[];
+  raw.forEach(t=>canonicalBreedTokens(t).forEach(x=>{if(!tokens.includes(x))tokens.push(x);}));
+  return tokens.join(" X ");
+}
+
 const BREEDS=[
   "American Staffordshire Terrier","Australian Kelpie","Australian Shepherd","Australian Terrier","Basset Hound","Beagle",
   "Bernese Mountain Dog","Bichon Frise","Border Collie","Border Terrier","Boston Terrier",
@@ -341,6 +380,7 @@ const POODLE_MIX_NAMES={
 //  - any other combination (or unresolved oodle mix) lists breeds alphabetically
 function displayBreed(breedStr,customName){
   if(!breedStr)return breedStr;
+  breedStr=canonicalizeBreedString(breedStr);
   const parts=breedStr.split(" X ").map(s=>s.trim()).filter(Boolean);
   const namedParts=parts.filter(p=>p!=="Unknown");
   const hasUnknownMix=namedParts.length<parts.length&&namedParts.length>0;
@@ -459,7 +499,7 @@ const fmtTime=t=>{if(!t)return"";const[h,mi]=t.split(":");const hr=parseInt(h,10
 const fmtMoney=n=>"$"+Math.round(n*100)/100;
 const fmtPhone=v=>{const d=v.replace(/\D/g,"").slice(0,10);if(d.length<=4)return d;if(d.length<=7)return`${d.slice(0,4)} ${d.slice(4)}`;return`${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7,10)}`;};
 const fmtAge=(dob,approx)=>{if(!dob)return"—";const b=new Date(dob),n=new Date();let y=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0){y--;m+=12;}if(approx)return y<=0?`~${m}mo`:`~${y}`;return y<=0?`${m}mo`:`${y}y ${m}mo`;};
-const isBrachy=breed=>["Bulldog","English Bulldog","French Bulldog","Pug","Boston Terrier","Shih Tzu","Lhasa Apso","Pekingese","Cavalier King Charles Spaniel","Boxer","Chow Chow","Shar Pei","Maltese Shih Tzu","Puggle","Affenpinscher","Brussels Griffon"].some(b=>breed&&breed.toLowerCase().includes(b.toLowerCase()));
+const isBrachy=breed=>["Bulldog","English Bulldog","French Bulldog","Pug","Boston Terrier","Shih Tzu","Lhasa Apso","Pekingese","Cavalier King Charles Spaniel","Boxer","Chow Chow","Shar Pei","Maltese Shih Tzu","Puggle","Affenpinscher","Brussels Griffon"].some(b=>breed&&canonicalizeBreedString(breed).toLowerCase().includes(b.toLowerCase()));
 const BEH_COLOR_GREEN=["Friendly","Food motivated","Good with Bruce","Good with handling"];
 const BEH_COLOR_BLUE=["Sensitive feet","Eats air","Table active","Sitter","Vocal","High energy","Patient / tolerant","Timid"];
 const BEH_COLOR_ORANGE=["Anxious","Separation anxiety","Fear of clippers","Head sensitive","Noise sensitive"];
@@ -753,7 +793,7 @@ function renderPage(){
 
 function renderDashboard(){
   const td=todayStr();const now=new Date();const nowTime=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  const upcoming=bookings.filter(b=>b.status!=="cancelled"&&(b.date>td||(b.date===td&&b.time>=nowTime))).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const upcoming=bookings.filter(b=>b.status!=="cancelled"&&b.status!=="done").sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   const next=upcoming[0];
   let nextHtml="";
   if(!next){
@@ -1428,7 +1468,7 @@ function openPtModal(pet){
   ptPhotoData=pet?.photo||null;_pendingPetPhotoUpload=null;
   document.getElementById("pt-special-custom").value=pet?.customSpecialHandling||"";
   // Load breeds
-  ptSelectedBreeds=pet?.breed?pet.breed.split(" X ").map(s=>s.trim()).filter(Boolean):[];
+  ptSelectedBreeds=pet?.breed?canonicalizeBreedString(pet.breed).split(" X ").map(s=>s.trim()).filter(Boolean):[];
   ptRenderBreedTags();ptInitBreeds();
   document.getElementById("pt-hide-brachy").checked=pet?.hideBrachy||false;
   ptUpdateBrachyToggle();
