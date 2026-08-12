@@ -316,13 +316,25 @@ tr:hover td{background:#fafbfc}
 const SERVICES=["Full groom","Bath & brush","Nail trim","Puppy groom"];
 const ADD_ONS=["De-shedding treatment","Poodle point"];
 const BLADES=["#10","#7F","#5F","#4F","#3F","#30","#15","#40"];
+const BLADE_AREAS=["Head","Body"];
+// Standard Wahl clipper-guard comb colour coding, used so the comb picker and chips match
+// the physical colour on the guard itself (easier to grab the right one at a glance).
 const COMBS=[
-  {size:"#0.5",mm:"1.5mm"},{size:"#1",mm:"3mm"},{size:"#1.5",mm:"4mm"},{size:"#2",mm:"6mm"},
-  {size:"#2.5",mm:"8mm"},{size:"#3",mm:"10mm"},{size:"#3.5",mm:"13mm"},{size:"#4",mm:"16mm"},
-  {size:"#4.5",mm:"19mm"},{size:"#5",mm:"22mm"},{size:"#5.5",mm:"25mm"},{size:"#6",mm:"28mm"},
-  {size:"#6.5",mm:"32mm"},{size:"#7",mm:"35mm"},{size:"#7.5",mm:"38mm"},{size:"#8",mm:"41mm"}
+  {size:"#1",mm:"3mm",colorName:"Red",bg:"#E53935",text:"#fff"},
+  {size:"#2",mm:"6mm",colorName:"Purple",bg:"#8E44AD",text:"#fff"},
+  {size:"#3",mm:"10mm",colorName:"Blue",bg:"#1E88E5",text:"#fff"},
+  {size:"#4",mm:"13mm",colorName:"Orange",bg:"#FB8C00",text:"#fff"},
+  {size:"#5",mm:"16mm",colorName:"Yellow",bg:"#FDD835",text:"#5c4b00"},
+  {size:"#6",mm:"19mm",colorName:"Lilac",bg:"#D1A3E0",text:"#4a1a5c"},
+  {size:"#7",mm:"22mm",colorName:"Green",bg:"#43A047",text:"#fff"},
+  {size:"#8",mm:"25mm",colorName:"Light blue",bg:"#81D4FA",text:"#01527a"}
 ];
 const COMB_LABELS=COMBS.map(c=>`${c.size} (${c.mm})`);
+function combInfo(label){return COMBS.find(c=>`${c.size} (${c.mm})`===label);}
+// Blades are stored as {blade, area} objects so a groomer can note "#4F on head" vs body;
+// normalizeBlades upgrades any older bookings that saved a plain string array.
+function normalizeBlades(arr){return(arr||[]).map(x=>typeof x==="string"?{blade:x,area:""}:{...x});}
+function bladeLabel(entry){return entry.area?`${entry.blade} (${entry.area})`:entry.blade;}
 const PRODUCT_KEYWORDS=["shampoo","conditioner","treatment","spray","rinse"];
 const PRODUCT_EXCLUDE=["spray bottle","shampoo bottles x 4"];
 function getProductsFromExpenses(){
@@ -945,7 +957,7 @@ function renderBookings(){
           </div>
         </div>
       </div>
-      ${(b.blades||[]).length||(b.combs||[]).length?`<div style="margin-left:46px;margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${(b.blades||[]).map(bl=>tag(bl,"#E8F3FF","#185FA5")).join("")}${(b.combs||[]).map(c=>tag(c,"#EAF7EE","#2f7a4a")).join("")}</div>`:""}
+      ${(b.blades||[]).length||(b.combs||[]).length?`<div style="margin-left:46px;margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${normalizeBlades(b.blades).map(bl=>tag(bladeLabel(bl),"#E8F3FF","#185FA5")).join("")}${(b.combs||[]).map(c=>{const info=combInfo(c);return info?tag(c,info.bg,info.text):tag(c,"#EAF7EE","#2f7a4a");}).join("")}</div>`:""}
       ${b.notes||b.nextnote||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">Booking notes</strong><br>${b.notes}</div>`:""}${b.nextnote?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#92400E;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">For next time</strong><br>${b.nextnote}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
     </div>`;
   }).join("");
@@ -1343,7 +1355,7 @@ function applyBkCrop(){
   }
 }
 function openBkModal(b){
-  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkActiveBlades=[...(b?.blades||[])];bkActiveCombs=[...(b?.combs||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
+  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkActiveBlades=normalizeBlades(b?.blades);bkActiveCombs=[...(b?.combs||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
   document.getElementById("bk-title").textContent=b?"Edit booking":"New booking";
   // Populate all pets (sorted alphabetically)
   const petSel=document.getElementById("bk-pet");
@@ -1419,15 +1431,26 @@ function renderBkProducts(active){
 }
 function renderBkBlades(active){
   const el=document.getElementById("bk-blades");if(!el)return;
-  el.innerHTML=BLADES.map(b=>{const isActive=active.includes(b);return`<button type="button" onclick="toggleBlade('${b}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${b}</button>`;}).join("");
+  el.innerHTML=BLADES.map(b=>{
+    const entry=active.find(x=>x.blade===b);
+    const isActive=!!entry;
+    const areaBtns=isActive?`<span style="display:inline-flex;gap:2px;margin-left:4px">${BLADE_AREAS.map(a=>`<button type="button" onclick="setBkBladeArea('${b}','${a}')" style="padding:2px 7px;font-size:9px;border-radius:10px;background:${entry.area===a?"#1C2B3A":"transparent"};color:${entry.area===a?"#fff":"#888"};border:1px solid ${entry.area===a?"#1C2B3A":"#ccc"};font-family:inherit;cursor:pointer">${a}</button>`).join("")}</span>`:"";
+    return`<span style="display:inline-flex;align-items:center;margin-right:5px;margin-bottom:5px"><button type="button" onclick="toggleBlade('${b}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${b}</button>${areaBtns}</span>`;
+  }).join("");
 }
 function toggleBlade(b){
-  bkActiveBlades=bkActiveBlades.includes(b)?bkActiveBlades.filter(x=>x!==b):[...bkActiveBlades,b];
+  const idx=bkActiveBlades.findIndex(x=>x.blade===b);
+  if(idx>=0)bkActiveBlades.splice(idx,1);else bkActiveBlades.push({blade:b,area:""});
+  renderBkBlades(bkActiveBlades);
+}
+function setBkBladeArea(b,area){
+  const entry=bkActiveBlades.find(x=>x.blade===b);if(!entry)return;
+  entry.area=entry.area===area?"":area;
   renderBkBlades(bkActiveBlades);
 }
 function renderBkCombs(active){
   const el=document.getElementById("bk-combs");if(!el)return;
-  el.innerHTML=COMB_LABELS.map(c=>{const isActive=active.includes(c);return`<button type="button" onclick="toggleComb('${c.replace(/'/g,"\\'")}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#5BAF7A":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #5BAF7A":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${c}</button>`;}).join("");
+  el.innerHTML=COMBS.map(info=>{const label=`${info.size} (${info.mm})`;const isActive=active.includes(label);return`<button type="button" onclick="toggleComb('${label}')" title="${info.colorName}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px 4px 8px;font-size:11px;border-radius:20px;background:${isActive?info.bg:"transparent"};color:${isActive?info.text:"#666"};border:${isActive?`1px solid ${info.bg}`:"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer"><span style="width:9px;height:9px;border-radius:50%;background:${info.bg};border:1px solid rgba(0,0,0,0.15);flex-shrink:0"></span>${isActive?"✓ ":""}${label}</button>`;}).join("");
 }
 function toggleComb(c){
   bkActiveCombs=bkActiveCombs.includes(c)?bkActiveCombs.filter(x=>x!==c):[...bkActiveCombs,c];
@@ -1528,7 +1551,7 @@ function openBkDetailsModal(id){
   const b=bookings.find(x=>x.id===id);if(!b)return;
   bkdEditing=b;
   bkdActiveProducts=[...(b.products||[])];
-  bkdActiveBlades=[...(b.blades||[])];
+  bkdActiveBlades=normalizeBlades(b.blades);
   bkdActiveCombs=[...(b.combs||[])];
   document.getElementById("bkd-notes").value=b.notes||"";
   document.getElementById("bkd-nextnote").value=b.nextnote||"";
@@ -1562,15 +1585,26 @@ function bkdToggleProduct(p){
 }
 function renderBkdBlades(){
   const el=document.getElementById("bkd-blades");if(!el)return;
-  el.innerHTML=BLADES.map(b=>{const isActive=bkdActiveBlades.includes(b);return`<button type="button" onclick="bkdToggleBlade('${b}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${b}</button>`;}).join("");
+  el.innerHTML=BLADES.map(b=>{
+    const entry=bkdActiveBlades.find(x=>x.blade===b);
+    const isActive=!!entry;
+    const areaBtns=isActive?`<span style="display:inline-flex;gap:2px;margin-left:4px">${BLADE_AREAS.map(a=>`<button type="button" onclick="setBkdBladeArea('${b}','${a}')" style="padding:2px 7px;font-size:9px;border-radius:10px;background:${entry.area===a?"#1C2B3A":"transparent"};color:${entry.area===a?"#fff":"#888"};border:1px solid ${entry.area===a?"#1C2B3A":"#ccc"};font-family:inherit;cursor:pointer">${a}</button>`).join("")}</span>`:"";
+    return`<span style="display:inline-flex;align-items:center;margin-right:5px;margin-bottom:5px"><button type="button" onclick="bkdToggleBlade('${b}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${b}</button>${areaBtns}</span>`;
+  }).join("");
 }
 function bkdToggleBlade(b){
-  bkdActiveBlades=bkdActiveBlades.includes(b)?bkdActiveBlades.filter(x=>x!==b):[...bkdActiveBlades,b];
+  const idx=bkdActiveBlades.findIndex(x=>x.blade===b);
+  if(idx>=0)bkdActiveBlades.splice(idx,1);else bkdActiveBlades.push({blade:b,area:""});
+  renderBkdBlades();
+}
+function setBkdBladeArea(b,area){
+  const entry=bkdActiveBlades.find(x=>x.blade===b);if(!entry)return;
+  entry.area=entry.area===area?"":area;
   renderBkdBlades();
 }
 function renderBkdCombs(){
   const el=document.getElementById("bkd-combs");if(!el)return;
-  el.innerHTML=COMB_LABELS.map(c=>{const isActive=bkdActiveCombs.includes(c);return`<button type="button" onclick="bkdToggleComb('${c.replace(/'/g,"\\'")}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#5BAF7A":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #5BAF7A":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${c}</button>`;}).join("");
+  el.innerHTML=COMBS.map(info=>{const label=`${info.size} (${info.mm})`;const isActive=bkdActiveCombs.includes(label);return`<button type="button" onclick="bkdToggleComb('${label}')" title="${info.colorName}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px 4px 8px;font-size:11px;border-radius:20px;background:${isActive?info.bg:"transparent"};color:${isActive?info.text:"#666"};border:${isActive?`1px solid ${info.bg}`:"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer"><span style="width:9px;height:9px;border-radius:50%;background:${info.bg};border:1px solid rgba(0,0,0,0.15);flex-shrink:0"></span>${isActive?"✓ ":""}${label}</button>`;}).join("");
 }
 function bkdToggleComb(c){
   bkdActiveCombs=bkdActiveCombs.includes(c)?bkdActiveCombs.filter(x=>x!==c):[...bkdActiveCombs,c];
