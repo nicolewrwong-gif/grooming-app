@@ -143,6 +143,14 @@ tr:hover td{background:#fafbfc}
   <label class="lbl">Products used</label>
   <div id="bk-products" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:2px"></div>
 </div>
+<div class="mb10">
+  <label class="lbl">Blades used</label>
+  <div id="bk-blades" class="multi-toggle"></div>
+</div>
+<div class="mb10">
+  <label class="lbl">Extension combs used</label>
+  <div id="bk-combs" class="multi-toggle"></div>
+</div>
 <div class="grid2">
   <div><label class="lbl">De-matting (min)</label><input type="number" id="bk-matting" value="0" min="0"/></div>
   <div><label class="lbl">Custom price ($)</label><input type="number" id="bk-custom" placeholder="Auto"/></div>
@@ -202,9 +210,10 @@ tr:hover td{background:#fafbfc}
   <div>
     <label class="lbl">Breed</label>
     <div id="pt-breed-tags" style="display:flex;flex-wrap:wrap;gap:4px;min-height:24px;margin-bottom:4px"></div>
-    <select id="pt-breed-select" onchange="ptAddBreed(this.value)" style="width:100%">
-      <option value="">Select breed...</option>
-    </select>
+    <div style="position:relative">
+      <input type="text" id="pt-breed-search" placeholder="Type to search breeds..." autocomplete="off" oninput="ptBreedSearchInput()" onfocus="ptBreedSearchInput()" onblur="ptScheduleCloseBreedDropdown()" style="width:100%"/>
+      <div id="pt-breed-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:2px;max-height:220px;overflow-y:auto;z-index:5;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+    </div>
     <div id="pt-brachy-toggle" style="display:none;margin-top:6px">
       <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);font-weight:500;cursor:pointer">
         <input type="checkbox" id="pt-hide-brachy" style="margin:0;width:auto"/> Don't show "Brachy" label for this pet
@@ -243,8 +252,10 @@ tr:hover td{background:#fafbfc}
 <div class="mb10"><label class="lbl">Behaviour notes</label><textarea id="pt-behavnote" rows="2" placeholder="e.g. settles after first 10 mins"></textarea></div>
 <div class="mb10"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><label class="lbl" style="margin:0;white-space:nowrap">Medical conditions</label><div id="pt-medical" class="multi-toggle" style="display:inline-flex;flex-wrap:wrap;gap:4px"></div></div></div>
 <div class="mb10"><label class="lbl">Medical notes</label><textarea id="pt-mednotes" rows="2" placeholder="e.g. sensitive skin"></textarea></div>
+<div class="mb10"><label class="lbl" style="color:#92620A;font-weight:600">Allergies</label><div id="pt-allergies" class="multi-toggle"></div><input type="text" id="pt-allergies-custom" placeholder="e.g. specific brand of shampoo" style="margin-top:6px"/></div>
 <div class="mb10"><label class="lbl">Preferred style</label><input type="text" id="pt-prefstyle" placeholder="e.g. teddy bear trim, summer cut..."/></div>
-<div class="mb10"><label class="lbl">Linked owners</label><div id="pt-owners" class="multi-toggle"></div></div>
+<div class="mb10"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="pt-treats" checked/> OK to give treats</label></div>
+<div class="mb10"><div style="display:flex;align-items:center;justify-content:space-between"><label class="lbl" style="margin:0">Linked owners</label><button type="button" class="sm" onclick="openOwModalFromPet()">+ New owner</button></div><div id="pt-owners" class="multi-toggle" style="margin-top:4px"></div></div>
 <div class="row-end"><button onclick="closePtModal()">Cancel</button><button class="primary" onclick="savePtModal()">Save pet profile</button></div>
 </div>
 </div>
@@ -270,6 +281,27 @@ tr:hover td{background:#fafbfc}
 </div>
 </div>
 
+<div id="modal-bkdetails" class="modal-bg">
+<div class="modal" style="width:420px">
+<h2>📝 Add booking details</h2>
+<div class="mb10">
+  <label class="lbl">Products used</label>
+  <div id="bkd-products" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:2px"></div>
+</div>
+<div class="mb10">
+  <label class="lbl">Blades used</label>
+  <div id="bkd-blades" class="multi-toggle"></div>
+</div>
+<div class="mb10">
+  <label class="lbl">Extension combs used</label>
+  <div id="bkd-combs" class="multi-toggle"></div>
+</div>
+<div class="mb10"><label class="lbl">Booking notes</label><textarea id="bkd-notes" rows="2" placeholder="e.g. check ear infection"></textarea></div>
+<div class="mb10"><label class="lbl">For next time</label><textarea id="bkd-nextnote" rows="2" placeholder="e.g. trim nails shorter next visit"></textarea></div>
+<div class="row-end"><button onclick="closeBkDetailsModal()">Cancel</button><button class="primary" onclick="saveBkDetailsModal()">Save details</button></div>
+</div>
+</div>
+
 <div id="confirm-modal" class="confirm-bg">
 <div class="confirm-box">
 <p id="confirm-msg"></p>
@@ -283,6 +315,14 @@ tr:hover td{background:#fafbfc}
 <script>
 const SERVICES=["Full groom","Bath & brush","Nail trim","Puppy groom"];
 const ADD_ONS=["De-shedding treatment","Poodle point"];
+const BLADES=["#10","#7F","#5F","#4F","#3F","#30","#15","#40"];
+const COMBS=[
+  {size:"#0.5",mm:"1.5mm"},{size:"#1",mm:"3mm"},{size:"#1.5",mm:"4mm"},{size:"#2",mm:"6mm"},
+  {size:"#2.5",mm:"8mm"},{size:"#3",mm:"10mm"},{size:"#3.5",mm:"13mm"},{size:"#4",mm:"16mm"},
+  {size:"#4.5",mm:"19mm"},{size:"#5",mm:"22mm"},{size:"#5.5",mm:"25mm"},{size:"#6",mm:"28mm"},
+  {size:"#6.5",mm:"32mm"},{size:"#7",mm:"35mm"},{size:"#7.5",mm:"38mm"},{size:"#8",mm:"41mm"}
+];
+const COMB_LABELS=COMBS.map(c=>`${c.size} (${c.mm})`);
 const PRODUCT_KEYWORDS=["shampoo","conditioner","treatment","spray","rinse"];
 const PRODUCT_EXCLUDE=["spray bottle","shampoo bottles x 4"];
 function getProductsFromExpenses(){
@@ -399,30 +439,82 @@ function displayBreed(breedStr,customName){
   return sorted.join(" X ")+(hasUnknownMix?" X":"");
 }
 
+// Typical adult size for each breed, used to auto-suggest the Size field when breeds are
+// picked on a pet profile. The dropdown remains fully editable — this only sets a default.
+const BREED_SIZE={
+  "Chihuahua":"Mini","Yorkshire Terrier":"Mini","Maltese":"Mini","Pomeranian":"Mini","Papillon":"Mini","Pekingese":"Mini",
+  "Bichon Frise":"Small","Boston Terrier":"Small","Cavalier King Charles Spaniel":"Small","Dachshund":"Small","Havanese":"Small",
+  "Jack Russell Terrier":"Small","Lhasa Apso":"Small","Miniature Schnauzer":"Small","Pug":"Small","Shih Tzu":"Small",
+  "West Highland White Terrier":"Small","French Bulldog":"Small","Australian Terrier":"Small","Border Terrier":"Small",
+  "Australian Kelpie":"Medium","Australian Shepherd":"Medium","Beagle":"Medium","Border Collie":"Medium","Bulldog":"Medium",
+  "English Bulldog":"Medium","Cocker Spaniel":"Medium","English Springer Spaniel":"Medium","Whippet":"Medium",
+  "Staffordshire Bull Terrier":"Medium","American Staffordshire Terrier":"Medium","Shetland Sheepdog":"Medium",
+  "Chinese Shar Pei":"Medium","Chow Chow":"Medium","Basset Hound":"Medium","Bull Terrier":"Medium","Samoyed":"Medium",
+  "Poodle":"Medium","Pembroke Welsh Corgi":"Medium","Dalmatian":"Medium",
+  "Boxer":"Large","Bull Arab":"Large","Dobermann Pinscher":"Large","German Shepherd Dog":"Large","Golden Retriever":"Large",
+  "Greyhound":"Large","Hungarian Vizsla":"Large","Labrador Retriever":"Large","Rhodesian Ridgeback":"Large","Rottweiler":"Large",
+  "Siberian Husky":"Large","Weimaraner":"Large","Maremma Sheepdog":"Large",
+  "Bernese Mountain Dog":"Extra large","Bullmastiff":"Extra large","Cane Corso":"Extra large","Great Dane":"Extra large",
+  "Newfoundland":"Extra large"
+};
+const SIZE_ORDER=["Mini","Small","Medium","Large","Extra large"];
+// Sets the Size dropdown to the largest typical size among the currently selected breeds.
+// Only called from explicit breed add/remove actions, never on modal open, so it never
+// overwrites a size the user already saved or manually picked.
+function ptAutoSelectSize(){
+  const sizes=ptSelectedBreeds.map(b=>BREED_SIZE[b]).filter(Boolean);
+  if(!sizes.length)return;
+  const maxIdx=Math.max(...sizes.map(s=>SIZE_ORDER.indexOf(s)));
+  const sizeSel=document.getElementById("pt-size");
+  if(sizeSel)sizeSel.value=SIZE_ORDER[maxIdx];
+}
+
 let ptSelectedBreeds=[];
 
 function ptInitBreeds(){
-  const sel=document.getElementById("pt-breed-select");
-  if(!sel)return;
-  sel.innerHTML='<option value="">Select breed...</option>';
-  BREEDS.forEach(b=>{
-    if(!ptSelectedBreeds.includes(b)){
-      const o=document.createElement("option");
-      o.value=b;o.textContent=b;sel.appendChild(o);
-    }
-  });
+  // With the typeahead, there's no persistent option list to rebuild — just make sure
+  // the search box is cleared and the dropdown closed whenever selections change.
+  const input=document.getElementById("pt-breed-search");
+  if(input)input.value="";
+  ptCloseBreedDropdown();
+}
+
+let _ptBreedBlurTimer=null;
+function ptBreedSearchInput(){
+  const input=document.getElementById("pt-breed-search");
+  const dd=document.getElementById("pt-breed-dropdown");
+  if(!input||!dd)return;
+  const q=input.value.trim().toLowerCase();
+  if(!q){dd.style.display="none";dd.innerHTML="";return;}
+  const matches=BREEDS.filter(b=>!ptSelectedBreeds.includes(b)&&b.toLowerCase().includes(q)).slice(0,8);
+  if(!matches.length){dd.style.display="none";dd.innerHTML="";return;}
+  dd.innerHTML=matches.map(b=>`<div onmousedown="event.preventDefault();ptSelectBreedMatch('${b.replace(/'/g,"\\'")}')" style="padding:7px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">${b}</div>`).join("");
+  dd.style.display="block";
+}
+function ptSelectBreedMatch(b){
+  ptAddBreed(b);
+  const input=document.getElementById("pt-breed-search");
+  if(input){input.value="";input.focus();}
+}
+function ptCloseBreedDropdown(){
+  const dd=document.getElementById("pt-breed-dropdown");
+  if(dd){dd.style.display="none";dd.innerHTML="";}
+}
+function ptScheduleCloseBreedDropdown(){
+  // Delay so a click on a dropdown item (which blurs the input) still registers first.
+  clearTimeout(_ptBreedBlurTimer);
+  _ptBreedBlurTimer=setTimeout(ptCloseBreedDropdown,150);
 }
 
 function ptAddBreed(val){
   if(!val||ptSelectedBreeds.includes(val))return;
   ptSelectedBreeds.push(val);
-  ptRenderBreedTags();ptInitBreeds();ptUpdateBrachyToggle();ptUpdateOodleOptions();
-  document.getElementById("pt-breed-select").value="";
+  ptRenderBreedTags();ptInitBreeds();ptUpdateBrachyToggle();ptUpdateOodleOptions();ptAutoSelectSize();
 }
 
 function ptRemoveBreed(idx){
   ptSelectedBreeds.splice(idx,1);
-  ptRenderBreedTags();ptInitBreeds();ptUpdateBrachyToggle();ptUpdateOodleOptions();
+  ptRenderBreedTags();ptInitBreeds();ptUpdateBrachyToggle();ptUpdateOodleOptions();ptAutoSelectSize();
 }
 
 function ptUpdateBrachyToggle(){
@@ -486,6 +578,8 @@ function ptApproxDob(){
 }
 
 const MEDICAL_TAGS=["Senior / fragile","Arthritis","Blind","Vision impaired","Heart condition","Diabetes","Allergies","Hip dysplasia","Recent surgery","Ear infection","Cancer","Kidney disease","Thyroid condition","Hearing Impaired","Deaf","Seizure History"];
+const ALLERGENS=["Chicken","Beef","Fish","Eggs","Dairy","Wheat / Gluten","Corn","Soy","Grain-free sensitivity","Fleas / Flea saliva","Certain shampoos","Fragrances / Perfumes","Certain flea/tick products","Latex","Pollen","Grass","Dust mites","Wool"];
+const allergyColor=t=>({bg:"#FFF3CD",text:"#92620A"});
 
 const COAT_TYPES=["Curly Coat","Silky Coat","Wire Coat","Double Coat","Smooth Coat","Wavy Coat","Wool Coat","Medium Coat","Long Coat"];
 const SPECIAL_HANDLING_TRAITS=["Requires multiple sessions","Requires breaks","Requires muzzle"];
@@ -703,14 +797,14 @@ pets=pets.map(p=>{
 });
 let owners=lsg("pg_owners2",[]);
 let expenses=lsg("pg_expenses2",[
-  {id:1,date:"2026-04-02",description:"Petway Curly Coat & Oodle Shampoo",amount:0,category:"supplies"},
-  {id:2,date:"2026-04-02",description:"Petway De-Shedding Shampoo",amount:0,category:"supplies"},
-  {id:3,date:"2026-04-02",description:"ProGroom Black Shampoo 125ml x 2",amount:0,category:"supplies"},
-  {id:4,date:"2026-04-02",description:"ProGroom Everyday Easy Rinse Conditioner 125ml",amount:0,category:"supplies"},
-  {id:5,date:"2026-04-02",description:"ProGroom Everyday Shampoo 125ml",amount:0,category:"supplies"},
-  {id:6,date:"2026-04-02",description:"ProGroom Hydrate Conditioner 125ml",amount:0,category:"supplies"},
-  {id:7,date:"2026-05-06",description:"Petway Everyday Pink Shampoo 250ml",amount:0,category:"supplies"},
-  {id:8,date:"2026-05-06",description:"Petway Gentle Protein Shampoo 250ml",amount:0,category:"supplies"}
+  {id:1,date:"2026-04-02",desc:"Petway Curly Coat & Oodle Shampoo",amount:0,category:"supplies"},
+  {id:2,date:"2026-04-02",desc:"Petway De-Shedding Shampoo",amount:0,category:"supplies"},
+  {id:3,date:"2026-04-02",desc:"ProGroom Black Shampoo 125ml x 2",amount:0,category:"supplies"},
+  {id:4,date:"2026-04-02",desc:"ProGroom Everyday Easy Rinse Conditioner 125ml",amount:0,category:"supplies"},
+  {id:5,date:"2026-04-02",desc:"ProGroom Everyday Shampoo 125ml",amount:0,category:"supplies"},
+  {id:6,date:"2026-04-02",desc:"ProGroom Hydrate Conditioner 125ml",amount:0,category:"supplies"},
+  {id:7,date:"2026-05-06",desc:"Petway Everyday Pink Shampoo 250ml",amount:0,category:"supplies"},
+  {id:8,date:"2026-05-06",desc:"Petway Gentle Protein Shampoo 250ml",amount:0,category:"supplies"}
 ]);
 let prices=lsg("pg_prices2",{...DEF_PRICES});reattachPhotos();
 let durations=lsg("pg_dur2",{...DEF_DUR});
@@ -803,7 +897,7 @@ function renderDashboard(){
     const brachy=pet&&isBrachy(pet.breed)&&!pet.hideBrachy?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:8px">Brachy</span>`:"";
     const behTags=(pet?.behaviour||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)).map(t=>{const c=behColor(t);return tag(t,c.bg,c.text);}).join("");
     const petPhoto=pet?.photo?`<img src="${pet.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="font-size:24px">🐾</div>`;
-    nextHtml=`<div class="card"><div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${petPhoto}<div style="flex:1"><div style="font-size:14px;font-weight:500">${pet?.name||"?"} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${displayBreed(pet?.breed,pet?.oodleName)||""}</span>${brachy}</div><div style="font-size:12px;color:#888">${owner?.name||"?"} &middot; ${owner?.phone||""}</div></div>${badge(next.status)}</div><div style="font-size:13px;margin-bottom:8px"><strong>${next.service}</strong>${(next.addOns||[]).length?" + "+next.addOns.join(", "):""} — ${fmtDate(next.date)} at ${fmtTime(next.time)}</div>${specialHandlingBox(pet,8)}${(()=>{const prevDone=[...bookings].filter(b=>b.petId===next.petId&&b.status==="done"&&b.nextnote).sort((a,b2)=>b2.date.localeCompare(a.date)||b2.time.localeCompare(a.time))[0];return prevDone?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:12px;color:#92400E;margin-bottom:8px;white-space:pre-wrap"><strong>For next time:</strong> ${prevDone.nextnote}</div>`:"";})()} <br>${behTags?`<div style="margin-bottom:10px">${behTags}</div>`:""}${(()=>{const lastBk=bookings.filter(b=>b.petId===next.petId&&b.id!==next.id&&b.status==="done"&&(b.products||[]).length).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))[0];return lastBk?`<div style="background:#EEF6FF;border-radius:6px;padding:6px 10px;font-size:11px;margin-bottom:8px"><span style="color:#185FA5;font-weight:600">Products last visit</span><br>${(lastBk.products||[]).map(p=>`<span style="display:inline-block;background:#D4EBFF;color:#185FA5;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;margin-right:3px">${p}</span>`).join("")}</div>`:"";})()}</div><div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;justify-content:flex-start"><button class="primary" onclick="markBkStatus(${next.id},'done')" style="padding:9px 18px;font-size:13px;background:#95ddbc;border-color:#95ddbc;color:#1a4a2e;box-shadow:0 3px 8px rgba(149,221,188,0.4)">Done</button><button class="primary" onclick="markBkStatus(${next.id},'cancelled')" style="padding:9px 18px;font-size:13px;background:#E8534A;border-color:#E8534A;box-shadow:0 3px 8px rgba(232,83,74,0.28)">Cancelled</button></div></div></div>`;
+    nextHtml=`<div class="card"><div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${petPhoto}<div style="flex:1"><div style="font-size:14px;font-weight:500">${pet?.name||"?"} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${displayBreed(pet?.breed,pet?.oodleName)||""}</span>${brachy}</div><div style="font-size:12px;color:#888">${owner?.name||"?"} &middot; ${owner?.phone||""}</div></div>${badge(next.status)}</div><div style="font-size:13px;margin-bottom:8px"><strong>${next.service}</strong>${(next.addOns||[]).length?" + "+next.addOns.join(", "):""} — ${fmtDate(next.date)} at ${fmtTime(next.time)}</div>${specialHandlingBox(pet,8)}${(()=>{const prevDone=[...bookings].filter(b=>b.petId===next.petId&&b.status==="done"&&b.nextnote).sort((a,b2)=>b2.date.localeCompare(a.date)||b2.time.localeCompare(a.time))[0];return prevDone?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:12px;color:#92400E;margin-bottom:8px;white-space:pre-wrap"><strong>For next time:</strong> ${prevDone.nextnote}</div>`:"";})()} <br>${behTags?`<div style="margin-bottom:10px">${behTags}</div>`:""}${(()=>{const lastBk=bookings.filter(b=>b.petId===next.petId&&b.id!==next.id&&b.status==="done"&&(b.products||[]).length).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time))[0];return lastBk?`<div style="background:#EEF6FF;border-radius:6px;padding:6px 10px;font-size:11px;margin-bottom:8px"><span style="color:#185FA5;font-weight:600">Products last visit</span><br>${(lastBk.products||[]).map(p=>`<span style="display:inline-block;background:#D4EBFF;color:#185FA5;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:500;margin-right:3px">${p}</span>`).join("")}</div>`:"";})()}</div><div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;justify-content:flex-start"><button class="primary" onclick="markBkStatus(${next.id},'done')" style="padding:9px 18px;font-size:13px;background:#95ddbc;border-color:#95ddbc;color:#1a4a2e;box-shadow:0 3px 8px rgba(149,221,188,0.4)">Done</button><button class="primary" onclick="markBkStatus(${next.id},'cancelled')" style="padding:9px 18px;font-size:13px;background:#E8534A;border-color:#E8534A;box-shadow:0 3px 8px rgba(232,83,74,0.28)">Cancelled</button><button class="sm" onclick="openBkDetailsModal(${next.id})">📝 Details</button></div></div></div>`;
   }
   let upcomingMore="";
   if(upcoming.length>1){
@@ -817,7 +911,7 @@ function renderBookings(){
   const cards=[...bookings].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).map(b=>{
     const owner=ownerById(b.ownerId),pet=petById(b.petId),p=bkPrice(b);
     const priceHtml=b.waived?`<em style="color:#534AB7">Waived</em>`:b.discount&&p.disc>0?`<span style="text-decoration:line-through;color:#aaa;font-size:11px;margin-right:4px">${fmtMoney(p.subtotal)}</span><strong>${fmtMoney(p.finalTotal)}</strong>`:`<strong>${fmtMoney(p.finalTotal)}</strong>`;
-    const payHtml=b.waived?tag("Waived","#EEEDFE","#534AB7"):b.paid?tag("Paid ✓","#EAF7EE","#5BAF7A"):`${tag("Outstanding","#FDECEA","#E8534A")}<div style="margin-top:4px;display:flex;gap:4px"><button class="sm" onclick="togglePaid(${b.id})">Mark paid</button><button class="sm" onclick="waiveBk(${b.id})">Waive</button></div>`;
+    const payHtml=b.waived?tag("Waived","#EEEDFE","#534AB7"):b.paid?tag("Paid ✓","#EAF7EE","#5BAF7A"):b.status!=="done"?tag("Not due yet","#F0F0F0","#888"):`${tag("Outstanding","#FDECEA","#E8534A")}<div style="margin-top:4px;display:flex;gap:4px"><button class="sm" onclick="togglePaid(${b.id})">Mark paid</button><button class="sm" onclick="waiveBk(${b.id})">Waive</button></div>`;
     return`<div class="card bk-card" data-id="${b.id}">
       <div style="display:flex;align-items:flex-start;gap:10px">
         ${avatar(owner?.name||"?",36)}
@@ -827,7 +921,7 @@ function renderBookings(){
               <div style="font-weight:500;font-size:13px">${owner?.name||"—"} <span style="color:#888;font-weight:400">&middot; ${owner?.phone||""}</span></div>
               <div style="font-size:12px;color:#888;margin-top:1px"><strong style="color:var(--text)">${pet?.name||"—"}</strong> &middot; ${displayBreed(pet?.breed,pet?.oodleName)||""}</div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${badge(b.status)}<button class="sm" onclick="editBk(${b.id})">&#9998;</button><button class="sm" onclick="deleteBk(${b.id})">&#128465;</button></div>
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${badge(b.status)}<button class="sm" onclick="openBkDetailsModal(${b.id})">📝 Details</button><button class="sm" onclick="editBk(${b.id})">&#9998;</button><button class="sm" onclick="deleteBk(${b.id})">&#128465;</button></div>
           </div>
           <div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
             <div style="min-width:120px">
@@ -851,6 +945,7 @@ function renderBookings(){
           </div>
         </div>
       </div>
+      ${(b.blades||[]).length||(b.combs||[]).length?`<div style="margin-left:46px;margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${(b.blades||[]).map(bl=>tag(bl,"#E8F3FF","#185FA5")).join("")}${(b.combs||[]).map(c=>tag(c,"#EAF7EE","#2f7a4a")).join("")}</div>`:""}
       ${b.notes||b.nextnote||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">Booking notes</strong><br>${b.notes}</div>`:""}${b.nextnote?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#92400E;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">For next time</strong><br>${b.nextnote}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
     </div>`;
   }).join("");
@@ -891,11 +986,13 @@ function renderPets(){
     const linkedOwners=owners.filter(o=>p.ownerIds.includes(o.id));
     const last=bookings.filter(b=>b.petId===p.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
     const brachy=isBrachy(p.breed)&&!p.hideBrachy?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:6px">Brachy</span>`:"";
+    const treatsBadge=p.treatsOk===false?`<span class="badge" style="background:#FDECEA;color:#E8534A;margin-left:6px">No treats</span>`:`<span class="badge" style="background:#EAF7EE;color:#5BAF7A;margin-left:6px">Treats OK</span>`;
     const behTags=sortBehTraits((p.behaviour||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)&&BEHAVIOUR_TRAITS.includes(t))).map(t=>{const c=behColor(t);return tag(t,c.bg,c.text);}).join("");
     const medTags=(p.medicalTags||[]).filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)&&MEDICAL_TAGS.includes(t)).map(t=>{const c=medColor(t);return tag(t,c.bg,c.text);}).join("");
+    const allergyTags=(p.allergies||[]).filter(t=>ALLERGENS.includes(t)).map(t=>{const c=allergyColor(t);return tag(t,c.bg,c.text);}).join("");
     const coatTags=(p.coatTypes||[]).filter(t=>COAT_TYPES.includes(t)).map(t=>tag(t,"#F0F0F0","#444")).join("");
     const photoEl=p.photo?`<img src="${p.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:44px;height:44px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🐾</div>`;
-    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${photoEl}<div style="flex:1"><div style="font-size:14px;font-weight:500">${p.name} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${displayBreed(p.breed,p.oodleName)}</span>${brachy}</div>${specialHandlingBox(p,4,4)}<div style="font-size:12px;color:#888;margin-top:2px">${p.sex} &middot; ${p.desexed?"Desexed":"Not desexed"} &middot; ${p.size} &middot; Age ${fmtAge(p.dob,p.approxAge)}</div>${coatTags?`<div style="margin-top:4px">${coatTags}</div>`:""}<div style="margin-top:4px">${behTags}</div>${(medTags||p.medicalNotes)?`<div style="background:#FDECEB;border-radius:6px;padding:5px 8px;font-size:11px;color:#E8534A;margin-top:6px"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:5px"><span style="font-weight:600;white-space:nowrap">Medical:</span>${medTags}</div>${p.medicalNotes?`<div style="white-space:pre-wrap;margin-top:3px">${p.medicalNotes}</div>`:""}</div>`:""}${p.preferredStyle?`<div style="font-size:11px;color:#888;margin-top:4px"><strong>Preferred style:</strong> ${p.preferredStyle}</div>`:""}${p.lastNote?`<div style="background:#FAEEDA;border-radius:6px;padding:5px 8px;font-size:11px;color:#854F0B;margin-top:6px;white-space:pre-wrap">${p.lastNote}</div>`:""}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="sm" onclick="editPet(${p.id})">&#9998;</button><button class="sm" onclick="deletePet(${p.id})">&#128465;</button></div></div><div style="margin-top:6px;padding-left:54px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><span style="font-size:11px;color:#888">Last: ${last?`${fmtDate(last.date)} &middot; ${last.service}`:"—"}</span><span style="font-size:11px;color:#888">Owners: ${linkedOwners.map(o=>o.name).join(", ")||"—"}</span></div></div>`;
+    return`<div class="card"><div style="display:flex;align-items:flex-start;gap:10px">${photoEl}<div style="flex:1"><div style="font-size:14px;font-weight:500">${p.name} <span style="font-size:12px;color:#888;font-weight:400">&middot; ${displayBreed(p.breed,p.oodleName)}</span>${brachy}${treatsBadge}</div>${specialHandlingBox(p,4,4)}<div style="font-size:12px;color:#888;margin-top:2px">${p.sex} &middot; ${p.desexed?"Desexed":"Not desexed"} &middot; ${p.size} &middot; Age ${fmtAge(p.dob,p.approxAge)}</div>${coatTags?`<div style="margin-top:4px">${coatTags}</div>`:""}<div style="margin-top:4px">${behTags}</div>${(medTags||p.medicalNotes)?`<div style="background:#FDECEB;border-radius:6px;padding:5px 8px;font-size:11px;color:#E8534A;margin-top:6px"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:5px"><span style="font-weight:600;white-space:nowrap">Medical:</span>${medTags}</div>${p.medicalNotes?`<div style="white-space:pre-wrap;margin-top:3px">${p.medicalNotes}</div>`:""}</div>`:""}${(allergyTags||p.customAllergies)?`<div style="background:#FFF3CD;border-radius:6px;padding:5px 8px;font-size:11px;color:#92620A;margin-top:6px"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:5px"><span style="font-weight:600;white-space:nowrap">Allergies:</span>${allergyTags}</div>${p.customAllergies?`<div style="white-space:pre-wrap;margin-top:3px">${p.customAllergies}</div>`:""}</div>`:""}${p.preferredStyle?`<div style="font-size:11px;color:#888;margin-top:4px"><strong>Preferred style:</strong> ${p.preferredStyle}</div>`:""}${p.lastNote?`<div style="background:#FAEEDA;border-radius:6px;padding:5px 8px;font-size:11px;color:#854F0B;margin-top:6px;white-space:pre-wrap">${p.lastNote}</div>`:""}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="sm" onclick="editPet(${p.id})">&#9998;</button><button class="sm" onclick="deletePet(${p.id})">&#128465;</button></div></div><div style="margin-top:6px;padding-left:54px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><span style="font-size:11px;color:#888">Last: ${last?`${fmtDate(last.date)} &middot; ${last.service}`:"—"}</span><span style="font-size:11px;color:#888">Owners: ${linkedOwners.map(o=>o.name).join(", ")||"—"}</span></div></div>`;
   }).join("");
   return`<div class="search-row"><span style="font-size:14px;font-weight:500">Pet profiles</span><div class="right"><button class="accent" onclick="openPtModal(null)">+ New pet</button></div></div>${rows||`<p style="text-align:center;color:#888;padding:2rem">No pets yet.</p>`}`;
 }
@@ -965,15 +1062,16 @@ function renderFinances(){
   const totalIncome=fi.reduce((s,b)=>s+bkPrice(b).finalTotal,0);
   const totalExp=expenses.reduce((s,e)=>s+e.amount,0);
   const profit=totalIncome-totalExp;
-  const outstanding=bookings.filter(b=>b.status!=="cancelled"&&!b.waived&&!b.paid);
+  const outstanding=bookings.filter(b=>b.status==="done"&&!b.waived&&!b.paid);
   const outTotal=outstanding.reduce((s,b)=>s+bkPrice(b).finalTotal,0);
   const sortedExp=[...expenses].sort((a,b)=>b.date.localeCompare(a.date)||a.desc.localeCompare(b.desc));
-  const expRows=sortedExp.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${e.desc}</td><td style="text-align:right;color:#E8534A;font-weight:500">-${fmtMoney(e.amount)}</td><td><button class="sm" onclick="deleteExp(${e.id})">&#128465;</button></td></tr>`).join("");
-  const incRows=fi.map(b=>{const owner=ownerById(b.ownerId),pet=petById(b.petId),p=bkPrice(b);return`<tr><td>${fmtDate(b.date)}</td><td>${pet?.name||"?"} (${owner?.name||"?"})</td><td style="text-align:right;color:#5BAF7A;font-weight:500">+${fmtMoney(p.finalTotal)}</td><td>${b.paid?tag("Paid","#EAF7EE","#5BAF7A"):tag("Outstanding","#FDECEA","#E8534A")}</td></tr>`;}).join("");
-  return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem"><div class="stat"><div class="slabel">Income</div><div class="sval" style="color:#5BAF7A">${fmtMoney(totalIncome)}</div></div><div class="stat"><div class="slabel">Expenses</div><div class="sval" style="color:#E8534A">${fmtMoney(totalExp)}</div></div><div class="stat"><div class="slabel">Net profit</div><div class="sval" style="color:${profit>=0?"#185FA5":"#E8534A"}">${fmtMoney(Math.abs(profit))}</div></div><div class="stat"><div class="slabel">Outstanding</div><div class="sval" style="color:#854F0B">${fmtMoney(outTotal)}</div></div></div><div style="font-size:14px;font-weight:600;margin-bottom:10px">Add expense</div><div class="card" style="margin-bottom:1.5rem"><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:2;min-width:120px"><label class="lbl">Description</label><input type="text" id="exp-desc" placeholder="e.g. shampoo supplies"/></div><div style="flex:1;min-width:90px"><label class="lbl">Amount ($)</label><input type="number" id="exp-amt" placeholder="0.00"/></div><div style="flex:1;min-width:120px"><label class="lbl">Date</label><input type="date" id="exp-date" value="${todayStr()}"/></div><button class="primary" onclick="addExp()" style="flex-shrink:0;height:56px;width:64px;padding:0;font-size:13px;font-weight:700;border-radius:12px;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;align-self:flex-end"><span style="font-size:16px;line-height:1">+</span><span>Add</span></button></div></div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Income</div><div style="overflow-x:auto;margin-bottom:1.5rem"><table><thead><tr><th>Date</th><th>Client</th><th style="text-align:right">Amount</th><th>Payment</th></tr></thead><tbody>${incRows}</tbody></table></div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Expenses</div><div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th></th></tr></thead><tbody>${expRows}</tbody></table></div>`;
+  const expRows=sortedExp.map(e=>`<tr${e.id===expEditing?' style="background:var(--teal-bg)"':""}><td>${fmtDate(e.date)}</td><td>${e.desc}</td><td style="text-align:right;color:#E8534A;font-weight:500">-${fmtMoney(e.amount)}</td><td style="white-space:nowrap"><button class="sm" onclick="editExp(${e.id})">&#9998;</button> <button class="sm" onclick="deleteExp(${e.id})">&#128465;</button></td></tr>`).join("");
+  const incRows=fi.map(b=>{const owner=ownerById(b.ownerId),pet=petById(b.petId),p=bkPrice(b);const payTag=b.paid?tag("Paid","#EAF7EE","#5BAF7A"):b.status!=="done"?tag("Not due yet","#F0F0F0","#888"):tag("Outstanding","#FDECEA","#E8534A");return`<tr><td>${fmtDate(b.date)}</td><td>${pet?.name||"?"} (${owner?.name||"?"})</td><td style="text-align:right;color:#5BAF7A;font-weight:500">+${fmtMoney(p.finalTotal)}</td><td>${payTag}</td></tr>`;}).join("");
+  const editingExp=expenses.find(e=>e.id===expEditing);
+  return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem"><div class="stat"><div class="slabel">Income</div><div class="sval" style="color:#5BAF7A">${fmtMoney(totalIncome)}</div></div><div class="stat"><div class="slabel">Expenses</div><div class="sval" style="color:#E8534A">${fmtMoney(totalExp)}</div></div><div class="stat"><div class="slabel">Net profit</div><div class="sval" style="color:${profit>=0?"#185FA5":"#E8534A"}">${fmtMoney(Math.abs(profit))}</div></div><div class="stat"><div class="slabel">Outstanding</div><div class="sval" style="color:#854F0B">${fmtMoney(outTotal)}</div></div></div><div style="font-size:14px;font-weight:600;margin-bottom:10px">${editingExp?"Edit expense":"Add expense"}</div><div class="card" style="margin-bottom:1.5rem"><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:2;min-width:120px"><label class="lbl">Description</label><input type="text" id="exp-desc" placeholder="e.g. shampoo supplies" value="${editingExp?editingExp.desc:""}"/></div><div style="flex:1;min-width:90px"><label class="lbl">Amount ($)</label><input type="number" id="exp-amt" placeholder="0.00" value="${editingExp?editingExp.amount:""}"/></div><div style="flex:1;min-width:120px"><label class="lbl">Date</label><input type="date" id="exp-date" value="${editingExp?editingExp.date:todayStr()}"/></div><button class="primary" onclick="addExp()" style="flex-shrink:0;height:56px;width:64px;padding:0;font-size:13px;font-weight:700;border-radius:12px;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;align-self:flex-end">${editingExp?'<span style="font-size:16px;line-height:1">&#10003;</span><span>Save</span>':'<span style="font-size:16px;line-height:1">+</span><span>Add</span>'}</button>${editingExp?'<button type="button" onclick="cancelEditExp()" style="flex-shrink:0;height:56px;align-self:flex-end">Cancel</button>':""}</div></div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Income</div><div style="overflow-x:auto;margin-bottom:1.5rem"><table><thead><tr><th>Date</th><th>Client</th><th style="text-align:right">Amount</th><th>Payment</th></tr></thead><tbody>${incRows}</tbody></table></div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Expenses</div><div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th></th></tr></thead><tbody>${expRows}</tbody></table></div>`;
 }
 
-let bkEditing=null,bkActiveAddons=[],bkActiveProducts=[],bkBeforePhoto=null,bkAfterPhoto=null;
+let bkEditing=null,bkActiveAddons=[],bkActiveProducts=[],bkActiveBlades=[],bkActiveCombs=[],bkBeforePhoto=null,bkAfterPhoto=null;
 let _pendingBeforeUpload=null,_pendingAfterUpload=null; // Promises that resolve to Drive URL or null
 let bkBeforePreCropUrl=null,bkAfterPreCropUrl=null; // Drive URLs superseded by a crop, pending deletion
 
@@ -1245,7 +1343,7 @@ function applyBkCrop(){
   }
 }
 function openBkModal(b){
-  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
+  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkActiveBlades=[...(b?.blades||[])];bkActiveCombs=[...(b?.combs||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
   document.getElementById("bk-title").textContent=b?"Edit booking":"New booking";
   // Populate all pets (sorted alphabetically)
   const petSel=document.getElementById("bk-pet");
@@ -1263,6 +1361,8 @@ function openBkModal(b){
   document.getElementById("bk-paid").checked=b?.paid||false;
   renderBkAddons(bkActiveAddons);
   renderBkProducts(bkActiveProducts);
+  renderBkBlades(bkActiveBlades);
+  renderBkCombs(bkActiveCombs);
   renderBkPhotos();
   if(b?.petId){petSel.value=b.petId;updateBkOwnerFromPet(b.petId,b.ownerId);}else{updateBkOwnerFromPet("","");}
   updateBkPrice();
@@ -1316,6 +1416,22 @@ function renderBkProducts(active){
     }
   }
   el.innerHTML=html;
+}
+function renderBkBlades(active){
+  const el=document.getElementById("bk-blades");if(!el)return;
+  el.innerHTML=BLADES.map(b=>{const isActive=active.includes(b);return`<button type="button" onclick="toggleBlade('${b}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${b}</button>`;}).join("");
+}
+function toggleBlade(b){
+  bkActiveBlades=bkActiveBlades.includes(b)?bkActiveBlades.filter(x=>x!==b):[...bkActiveBlades,b];
+  renderBkBlades(bkActiveBlades);
+}
+function renderBkCombs(active){
+  const el=document.getElementById("bk-combs");if(!el)return;
+  el.innerHTML=COMB_LABELS.map(c=>{const isActive=active.includes(c);return`<button type="button" onclick="toggleComb('${c.replace(/'/g,"\\'")}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#5BAF7A":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #5BAF7A":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${c}</button>`;}).join("");
+}
+function toggleComb(c){
+  bkActiveCombs=bkActiveCombs.includes(c)?bkActiveCombs.filter(x=>x!==c):[...bkActiveCombs,c];
+  renderBkCombs(bkActiveCombs);
 }
 function isDeshedProduct(p){return/deshed|de-shed/i.test(p)&&/david|rinse/i.test(p);}
 const DESHED_ADDON="De-shedding treatment";
@@ -1381,7 +1497,7 @@ function closeBkModal(){
   if(bkAfterPhoto&&bkAfterPhoto.startsWith("http")&&bkAfterPhoto!==savedAfter)deletePhotoFromDrive(bkAfterPhoto);
   deletePhotoFromDrive(bkBeforePreCropUrl);
   deletePhotoFromDrive(bkAfterPreCropUrl);
-  bkEditing=null;bkActiveAddons=[];bkActiveProducts=[];
+  bkEditing=null;bkActiveAddons=[];bkActiveProducts=[];bkActiveBlades=[];bkActiveCombs=[];
   bkBeforePhoto=null;bkAfterPhoto=null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
 }
 async function saveBkModal(){
@@ -1398,7 +1514,7 @@ async function saveBkModal(){
     _pendingBeforeUpload=null;_pendingAfterUpload=null;
   }
   const customRaw=document.getElementById("bk-custom").value;
-  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
+  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],blades:[...bkActiveBlades],combs:[...bkActiveCombs],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   if(bkEditing){bookings=bookings.map(b=>b.id===bkEditing.id?{...b,...obj}:b);}else{bookings.push({id:nextId++,...obj});}
   // Clean up any Drive URLs superseded by crops during this session
   deletePhotoFromDrive(bkBeforePreCropUrl);deletePhotoFromDrive(bkAfterPreCropUrl);
@@ -1407,13 +1523,72 @@ async function saveBkModal(){
   bkEditing={...(bkEditing||{}),beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   save();closeBkModal();render();
 }
+let bkdEditing=null,bkdActiveProducts=[],bkdActiveBlades=[],bkdActiveCombs=[];
+function openBkDetailsModal(id){
+  const b=bookings.find(x=>x.id===id);if(!b)return;
+  bkdEditing=b;
+  bkdActiveProducts=[...(b.products||[])];
+  bkdActiveBlades=[...(b.blades||[])];
+  bkdActiveCombs=[...(b.combs||[])];
+  document.getElementById("bkd-notes").value=b.notes||"";
+  document.getElementById("bkd-nextnote").value=b.nextnote||"";
+  renderBkdProducts();
+  renderBkdBlades();
+  renderBkdCombs();
+  document.getElementById("modal-bkdetails").classList.add("open");
+}
+function closeBkDetailsModal(){
+  document.getElementById("modal-bkdetails").classList.remove("open");
+  bkdEditing=null;bkdActiveProducts=[];bkdActiveBlades=[];bkdActiveCombs=[];
+}
+function renderBkdProducts(){
+  const el=document.getElementById("bkd-products");if(!el)return;
+  const prods=getProductsFromExpenses();
+  const available=prods.filter(p=>!emptyProducts.includes(p));
+  let html="";
+  if(!prods.length){
+    html=`<span style="font-size:11px;color:#aaa">Add product expenses to populate this list.</span>`;
+  } else {
+    available.forEach(p=>{
+      const isActive=bkdActiveProducts.includes(p);
+      html+=`<button type="button" onclick="bkdToggleProduct('${p.replace(/'/g,"\\'")}')" style="padding:4px 10px;font-size:11px;border-radius:20px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#555"};border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer;margin-right:5px;margin-bottom:5px">${isActive?"✓ ":""}${p}</button>`;
+    });
+  }
+  el.innerHTML=html;
+}
+function bkdToggleProduct(p){
+  bkdActiveProducts=bkdActiveProducts.includes(p)?bkdActiveProducts.filter(x=>x!==p):[...bkdActiveProducts,p];
+  renderBkdProducts();
+}
+function renderBkdBlades(){
+  const el=document.getElementById("bkd-blades");if(!el)return;
+  el.innerHTML=BLADES.map(b=>{const isActive=bkdActiveBlades.includes(b);return`<button type="button" onclick="bkdToggleBlade('${b}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#4DA6FF":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #4DA6FF":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${b}</button>`;}).join("");
+}
+function bkdToggleBlade(b){
+  bkdActiveBlades=bkdActiveBlades.includes(b)?bkdActiveBlades.filter(x=>x!==b):[...bkdActiveBlades,b];
+  renderBkdBlades();
+}
+function renderBkdCombs(){
+  const el=document.getElementById("bkd-combs");if(!el)return;
+  el.innerHTML=COMB_LABELS.map(c=>{const isActive=bkdActiveCombs.includes(c);return`<button type="button" onclick="bkdToggleComb('${c.replace(/'/g,"\\'")}')" style="padding:4px 11px;font-size:11px;border-radius:20px;background:${isActive?"#5BAF7A":"transparent"};color:${isActive?"#fff":"#666"};border:${isActive?"1px solid #5BAF7A":"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer">${isActive?"✓ ":""}${c}</button>`;}).join("");
+}
+function bkdToggleComb(c){
+  bkdActiveCombs=bkdActiveCombs.includes(c)?bkdActiveCombs.filter(x=>x!==c):[...bkdActiveCombs,c];
+  renderBkdCombs();
+}
+function saveBkDetailsModal(){
+  if(!bkdEditing)return;
+  const obj={products:[...bkdActiveProducts],blades:[...bkdActiveBlades],combs:[...bkdActiveCombs],notes:document.getElementById("bkd-notes").value,nextnote:document.getElementById("bkd-nextnote").value};
+  bookings=bookings.map(b=>b.id===bkdEditing.id?{...b,...obj}:b);
+  save();closeBkDetailsModal();render();
+}
 function markBkStatus(id,status){bookings=bookings.map(b=>b.id===id?{...b,status}:b);save();render();}
 function editBk(id){const b=bookings.find(x=>x.id===id);if(!b)return;openBkModal(b);}
 function deleteBk(id){openConfirm("Delete this booking?","Delete",()=>{bookings=bookings.filter(b=>b.id!==id);save();render();});}
 function togglePaid(id){bookings=bookings.map(b=>b.id===id?{...b,paid:!b.paid,waived:false}:b);save();render();}
 function waiveBk(id){openConfirm("Waive payment for this booking?","Waive",()=>{bookings=bookings.map(b=>b.id===id?{...b,waived:true,paid:false}:b);save();render();});}
 
-let ptEditing=null,ptActiveBehaviour=[],ptActiveCoats=[],ptActiveMedical=[],ptActiveOwners=[],ptPhotoData=null,_pendingPetPhotoUpload=null;
+let ptEditing=null,ptActiveBehaviour=[],ptActiveCoats=[],ptActiveMedical=[],ptActiveAllergies=[],ptActiveOwners=[],ptPhotoData=null,_pendingPetPhotoUpload=null;
 function ptPhotoSelected(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
@@ -1460,13 +1635,16 @@ function openPtModal(pet){
   document.getElementById("pt-size").value=pet?.size||"Medium";
   document.getElementById("pt-mednotes").value=pet?.medicalNotes||"";
   document.getElementById("pt-prefstyle").value=pet?.preferredStyle||"";
+  document.getElementById("pt-treats").checked=pet?(pet.treatsOk!==false):true;
   document.getElementById("pt-behavnote").value=pet?.lastNote||"";
   ptActiveBehaviour=[...(pet?.behaviour||[])];
   ptActiveCoats=[...(pet?.coatTypes||[])];
   ptActiveMedical=[...(pet?.medicalTags||[])];
+  ptActiveAllergies=[...(pet?.allergies||[])];
   ptActiveOwners=[...(pet?.ownerIds||[])];
   ptPhotoData=pet?.photo||null;_pendingPetPhotoUpload=null;
   document.getElementById("pt-special-custom").value=pet?.customSpecialHandling||"";
+  document.getElementById("pt-allergies-custom").value=pet?.customAllergies||"";
   // Load breeds
   ptSelectedBreeds=pet?.breed?canonicalizeBreedString(pet.breed).split(" X ").map(s=>s.trim()).filter(Boolean):[];
   ptRenderBreedTags();ptInitBreeds();
@@ -1497,6 +1675,7 @@ function renderPtToggles(){
   renderToggle("pt-coats",COAT_TYPES,ptActiveCoats,null,"ptCoat");
   renderToggle("pt-special",SPECIAL_HANDLING_TRAITS,ptActiveBehaviour.filter(t=>SPECIAL_HANDLING_TRAITS.includes(t)),()=>({bg:"#FDECEA",text:"#E8534A"}),"ptSH");
   renderToggle("pt-medical",MEDICAL_TAGS,ptActiveMedical,t=>{const c=medColor(t);return{bg:c.bg,text:c.text};},"ptMed");
+  renderToggle("pt-allergies",ALLERGENS,ptActiveAllergies,t=>{const c=allergyColor(t);return{bg:c.bg,text:c.text};},"ptAllergy");
   renderToggle("pt-owners",owners.map(o=>o.name),owners.filter(o=>ptActiveOwners.includes(o.id)).map(o=>o.name),null,"ptOwn");
 }
 function renderToggle(elId,opts,active,colorFn,prefix){
@@ -1514,6 +1693,7 @@ function ptBehToggle(i){const t=BEHAVIOUR_TRAITS.filter(x=>!SPECIAL_HANDLING_TRA
 function ptSHToggle(i){const t=SPECIAL_HANDLING_TRAITS[i];if(!t)return;ptActiveBehaviour=ptActiveBehaviour.includes(t)?ptActiveBehaviour.filter(x=>x!==t):[...ptActiveBehaviour,t];renderPtToggles();}
 function ptCoatToggle(i){const t=COAT_TYPES[i];ptActiveCoats=ptActiveCoats.includes(t)?ptActiveCoats.filter(x=>x!==t):[...ptActiveCoats,t];renderPtToggles();}
 function ptMedToggle(i){const t=MEDICAL_TAGS[i];ptActiveMedical=ptActiveMedical.includes(t)?ptActiveMedical.filter(x=>x!==t):[...ptActiveMedical,t];renderPtToggles();}
+function ptAllergyToggle(i){const t=ALLERGENS[i];ptActiveAllergies=ptActiveAllergies.includes(t)?ptActiveAllergies.filter(x=>x!==t):[...ptActiveAllergies,t];renderPtToggles();}
 function ptOwnToggle(i){const oid=owners[i]?.id;if(!oid)return;ptActiveOwners=ptActiveOwners.includes(oid)?ptActiveOwners.filter(x=>x!==oid):[...ptActiveOwners,oid];renderPtToggles();}
 function closePtModal(){document.getElementById("modal-pet").classList.remove("open");ptEditing=null;}
 async function savePtModal(){
@@ -1530,7 +1710,7 @@ async function savePtModal(){
     if(url)ptPhotoData=url;
     _pendingPetPhotoUpload=null;
   }
-  const obj={name,breed,dob:dob,approxAge:approxAge,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,preferredStyle:document.getElementById("pt-prefstyle").value,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim(),hideBrachy:document.getElementById("pt-hide-brachy").checked,oodleName:document.getElementById("pt-oodle-name").value.trim()||null};
+  const obj={name,breed,dob:dob,approxAge:approxAge,sex:document.getElementById("pt-sex").value,desexed:document.getElementById("pt-desexed").value==="yes",size:document.getElementById("pt-size").value,coatTypes:[...ptActiveCoats],behaviour:[...ptActiveBehaviour],medicalTags:[...ptActiveMedical],medicalNotes:document.getElementById("pt-mednotes").value,allergies:[...ptActiveAllergies],customAllergies:document.getElementById("pt-allergies-custom").value.trim(),preferredStyle:document.getElementById("pt-prefstyle").value,treatsOk:document.getElementById("pt-treats").checked,lastNote:document.getElementById("pt-behavnote").value,ownerIds:[...ptActiveOwners],photo:ptPhotoData||null,photos:ptEditing?.photos||[],customSpecialHandling:document.getElementById("pt-special-custom").value.trim(),hideBrachy:document.getElementById("pt-hide-brachy").checked,oodleName:document.getElementById("pt-oodle-name").value.trim()||null};
   if(ptEditing){pets=pets.map(p=>p.id===ptEditing.id?{...p,...obj}:p);}else{pets.push({id:nextPetId++,...obj});}
   save();closePtModal();render();
 }
@@ -1538,6 +1718,11 @@ function editPet(id){const p=pets.find(x=>x.id===id);if(p)openPtModal(p);}
 function deletePet(id){openConfirm("Delete this pet profile?","Delete",()=>{pets=pets.filter(p=>p.id!==id);save();render();});}
 
 let owEditing=null;
+let _owLinkToPetOnSave=false;
+function openOwModalFromPet(){
+  _owLinkToPetOnSave=true;
+  openOwModal(null);
+}
 function openOwModal(owner){
   owEditing=owner||null;
   document.getElementById("ow-title").textContent=owner?"Edit owner":"New owner";
@@ -1569,14 +1754,21 @@ function owContactSelect(val){
   const next=cur===val?"":val;
   renderOwContactToggle(next);
 }
-function closeOwModal(){document.getElementById("modal-owner").classList.remove("open");owEditing=null;}
+function closeOwModal(){document.getElementById("modal-owner").classList.remove("open");owEditing=null;_owLinkToPetOnSave=false;}
 function saveOwModal(){
   const name=document.getElementById("ow-name").value.trim();
   const phone=document.getElementById("ow-phone").value.trim();
   if(!name||!phone){alert("Please enter name and phone.");return;}
   const obj={name,phone:fmtPhone(phone),email:document.getElementById("ow-email").value.trim(),contact:document.getElementById("ow-contact").value,notes:document.getElementById("ow-notes").value.trim()};
-  if(owEditing){owners=owners.map(o=>o.id===owEditing.id?{...o,...obj}:o);}else{owners.push({id:nextOId++,...obj});}
+  let newOwnerId=null;
+  if(owEditing){owners=owners.map(o=>o.id===owEditing.id?{...o,...obj}:o);}else{newOwnerId=nextOId;owners.push({id:nextOId++,...obj});}
+  const linkToPet=_owLinkToPetOnSave;
+  if(linkToPet&&newOwnerId){
+    if(!ptActiveOwners.includes(newOwnerId))ptActiveOwners.push(newOwnerId);
+  }
+  _owLinkToPetOnSave=false;
   save();closeOwModal();render();
+  if(linkToPet&&newOwnerId)renderPtToggles();
 }
 function editOwner(id){const o=owners.find(x=>x.id===id);if(o)openOwModal(o);}
 function deleteOwner(id){openConfirm("Delete this owner?","Delete",()=>{owners=owners.filter(o=>o.id!==id);pets=pets.map(p=>({...p,ownerIds:p.ownerIds.filter(oid=>oid!==id)}));save();render();});}
@@ -1597,17 +1789,30 @@ function savePriceModal(){
   save();closePriceModal();render();
 }
 
+let expEditing=null;
 function addExp(){
   const desc=document.getElementById("exp-desc")?.value?.trim();
   const amt=parseFloat(document.getElementById("exp-amt")?.value);
   const date=document.getElementById("exp-date")?.value;
   if(!desc||isNaN(amt)||amt<0||!date){alert("Please fill in all expense fields.");return;}
-  expenses.push({id:nextExpId++,desc,amount:amt,date});
+  if(expEditing){
+    expenses=expenses.map(e=>e.id===expEditing?{...e,desc,amount:amt,date}:e);
+    expEditing=null;
+  }else{
+    expenses.push({id:nextExpId++,desc,amount:amt,date});
+  }
   save();render();
   // Refresh product buttons if booking modal is open
   if(document.getElementById("modal-booking").classList.contains("open"))renderBkProducts(bkActiveProducts);
 }
-function deleteExp(id){openConfirm("Remove this expense?","Remove",()=>{expenses=expenses.filter(e=>e.id!==id);save();render();});}
+function editExp(id){
+  if(!expenses.find(e=>e.id===id))return;
+  expEditing=id;
+  render();
+  document.getElementById("exp-desc")?.focus();
+}
+function cancelEditExp(){expEditing=null;render();}
+function deleteExp(id){openConfirm("Remove this expense?","Remove",()=>{expenses=expenses.filter(e=>e.id!==id);if(expEditing===id)expEditing=null;save();render();});}
 
 // Build tabs row
 document.getElementById("tabs-row").innerHTML=["dashboard","bookings","calendar","pets","clients","pricing","finances"].map(t=>`<button class="tab-btn" onclick="switchTab('${t}')" id="tab-${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join("");
