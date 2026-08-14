@@ -315,7 +315,7 @@ tr:hover td{background:#fafbfc}
 <script>
 const SERVICES=["Full groom","Bath & brush","Nail trim","Puppy groom"];
 const ADD_ONS=["De-shedding treatment","Poodle point"];
-const BLADES=["#10","#7F","#5F","#4F","#3F","#30","#15","#40"];
+const BLADES=["#10","#7F","#4F","#3F","#15"];
 const BLADE_AREAS=["Head","Body"];
 // Standard Wahl clipper-guard comb colour coding, used so the comb picker and chips match
 // the physical colour on the guard itself (easier to grab the right one at a glance).
@@ -335,6 +335,10 @@ function combInfo(label){return COMBS.find(c=>`${c.size} (${c.mm})`===label);}
 // normalizeBlades upgrades any older bookings that saved a plain string array.
 function normalizeBlades(arr){return(arr||[]).map(x=>typeof x==="string"?{blade:x,area:""}:{...x});}
 function bladeLabel(entry){return entry.area?`${entry.blade} (${entry.area})`:entry.blade;}
+// Combs are stored as {comb, area} objects, same pattern as blades, so a groomer can note
+// a comb used on head vs body; normalizeCombs upgrades any older bookings saved as plain strings.
+function normalizeCombs(arr){return(arr||[]).map(x=>typeof x==="string"?{comb:x,area:""}:{...x});}
+function combChipLabel(entry){return entry.area?`${entry.comb} (${entry.area})`:entry.comb;}
 const PRODUCT_KEYWORDS=["shampoo","conditioner","treatment","spray","rinse"];
 const PRODUCT_EXCLUDE=["spray bottle","shampoo bottles x 4"];
 function getProductsFromExpenses(){
@@ -957,7 +961,7 @@ function renderBookings(){
           </div>
         </div>
       </div>
-      ${(b.blades||[]).length||(b.combs||[]).length?`<div style="margin-left:46px;margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${normalizeBlades(b.blades).map(bl=>tag(bladeLabel(bl),"#E8F3FF","#185FA5")).join("")}${(b.combs||[]).map(c=>{const info=combInfo(c);return info?tag(c,info.bg,info.text):tag(c,"#EAF7EE","#2f7a4a");}).join("")}</div>`:""}
+      ${(b.blades||[]).length||(b.combs||[]).length?`<div style="margin-left:46px;margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${normalizeBlades(b.blades).map(bl=>tag(bladeLabel(bl),"#E8F3FF","#185FA5")).join("")}${normalizeCombs(b.combs).map(c=>{const info=combInfo(c.comb);return info?tag(combChipLabel(c),info.bg,info.text):tag(combChipLabel(c),"#EAF7EE","#2f7a4a");}).join("")}</div>`:""}
       ${b.notes||b.nextnote||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">Booking notes</strong><br>${b.notes}</div>`:""}${b.nextnote?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#92400E;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">For next time</strong><br>${b.nextnote}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
     </div>`;
   }).join("");
@@ -1071,7 +1075,7 @@ function renderPricing(){
 
 function renderFinances(){
   const fi=bookings.filter(b=>b.status!=="cancelled"&&!b.waived);
-  const totalIncome=fi.reduce((s,b)=>s+bkPrice(b).finalTotal,0);
+  const totalIncome=fi.filter(b=>b.paid).reduce((s,b)=>s+bkPrice(b).finalTotal,0);
   const totalExp=expenses.reduce((s,e)=>s+e.amount,0);
   const profit=totalIncome-totalExp;
   const outstanding=bookings.filter(b=>b.status==="done"&&!b.waived&&!b.paid);
@@ -1355,7 +1359,7 @@ function applyBkCrop(){
   }
 }
 function openBkModal(b){
-  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkActiveBlades=normalizeBlades(b?.blades);bkActiveCombs=[...(b?.combs||[])];bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
+  bkEditing=b||null;bkActiveAddons=[...(b?.addOns||[])];bkActiveProducts=[...(b?.products||[])];bkActiveBlades=normalizeBlades(b?.blades);bkActiveCombs=normalizeCombs(b?.combs);bkBeforePhoto=b?.beforePhoto||null;bkAfterPhoto=b?.afterPhoto||null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
   document.getElementById("bk-title").textContent=b?"Edit booking":"New booking";
   // Populate all pets (sorted alphabetically)
   const petSel=document.getElementById("bk-pet");
@@ -1450,10 +1454,22 @@ function setBkBladeArea(b,area){
 }
 function renderBkCombs(active){
   const el=document.getElementById("bk-combs");if(!el)return;
-  el.innerHTML=COMBS.map(info=>{const label=`${info.size} (${info.mm})`;const isActive=active.includes(label);return`<button type="button" onclick="toggleComb('${label}')" title="${info.colorName}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px 4px 8px;font-size:11px;border-radius:20px;background:${isActive?info.bg:"transparent"};color:${isActive?info.text:"#666"};border:${isActive?`1px solid ${info.bg}`:"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer"><span style="width:9px;height:9px;border-radius:50%;background:${info.bg};border:1px solid rgba(0,0,0,0.15);flex-shrink:0"></span>${isActive?"✓ ":""}${label}</button>`;}).join("");
+  el.innerHTML=COMBS.map(info=>{
+    const label=`${info.size} (${info.mm})`;
+    const entry=active.find(x=>x.comb===label);
+    const isActive=!!entry;
+    const areaBtns=isActive?`<span style="display:inline-flex;gap:2px;margin-left:4px">${BLADE_AREAS.map(a=>`<button type="button" onclick="setBkCombArea('${label}','${a}')" style="padding:2px 7px;font-size:9px;border-radius:10px;background:${entry.area===a?"#1C2B3A":"transparent"};color:${entry.area===a?"#fff":"#888"};border:1px solid ${entry.area===a?"#1C2B3A":"#ccc"};font-family:inherit;cursor:pointer">${a}</button>`).join("")}</span>`:"";
+    return`<span style="display:inline-flex;align-items:center;margin-right:5px;margin-bottom:5px"><button type="button" onclick="toggleComb('${label}')" title="${info.colorName}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px 4px 8px;font-size:11px;border-radius:20px;background:${isActive?info.bg:"transparent"};color:${isActive?info.text:"#666"};border:${isActive?`1px solid ${info.bg}`:"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer"><span style="width:9px;height:9px;border-radius:50%;background:${info.bg};border:1px solid rgba(0,0,0,0.15);flex-shrink:0"></span>${isActive?"✓ ":""}${label}</button>${areaBtns}</span>`;
+  }).join("");
 }
-function toggleComb(c){
-  bkActiveCombs=bkActiveCombs.includes(c)?bkActiveCombs.filter(x=>x!==c):[...bkActiveCombs,c];
+function toggleComb(label){
+  const idx=bkActiveCombs.findIndex(x=>x.comb===label);
+  if(idx>=0)bkActiveCombs.splice(idx,1);else bkActiveCombs.push({comb:label,area:""});
+  renderBkCombs(bkActiveCombs);
+}
+function setBkCombArea(label,area){
+  const entry=bkActiveCombs.find(x=>x.comb===label);if(!entry)return;
+  entry.area=entry.area===area?"":area;
   renderBkCombs(bkActiveCombs);
 }
 function isDeshedProduct(p){return/deshed|de-shed/i.test(p)&&/david|rinse/i.test(p);}
@@ -1552,7 +1568,7 @@ function openBkDetailsModal(id){
   bkdEditing=b;
   bkdActiveProducts=[...(b.products||[])];
   bkdActiveBlades=normalizeBlades(b.blades);
-  bkdActiveCombs=[...(b.combs||[])];
+  bkdActiveCombs=normalizeCombs(b.combs);
   document.getElementById("bkd-notes").value=b.notes||"";
   document.getElementById("bkd-nextnote").value=b.nextnote||"";
   renderBkdProducts();
@@ -1604,10 +1620,22 @@ function setBkdBladeArea(b,area){
 }
 function renderBkdCombs(){
   const el=document.getElementById("bkd-combs");if(!el)return;
-  el.innerHTML=COMBS.map(info=>{const label=`${info.size} (${info.mm})`;const isActive=bkdActiveCombs.includes(label);return`<button type="button" onclick="bkdToggleComb('${label}')" title="${info.colorName}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px 4px 8px;font-size:11px;border-radius:20px;background:${isActive?info.bg:"transparent"};color:${isActive?info.text:"#666"};border:${isActive?`1px solid ${info.bg}`:"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer"><span style="width:9px;height:9px;border-radius:50%;background:${info.bg};border:1px solid rgba(0,0,0,0.15);flex-shrink:0"></span>${isActive?"✓ ":""}${label}</button>`;}).join("");
+  el.innerHTML=COMBS.map(info=>{
+    const label=`${info.size} (${info.mm})`;
+    const entry=bkdActiveCombs.find(x=>x.comb===label);
+    const isActive=!!entry;
+    const areaBtns=isActive?`<span style="display:inline-flex;gap:2px;margin-left:4px">${BLADE_AREAS.map(a=>`<button type="button" onclick="setBkdCombArea('${label}','${a}')" style="padding:2px 7px;font-size:9px;border-radius:10px;background:${entry.area===a?"#1C2B3A":"transparent"};color:${entry.area===a?"#fff":"#888"};border:1px solid ${entry.area===a?"#1C2B3A":"#ccc"};font-family:inherit;cursor:pointer">${a}</button>`).join("")}</span>`:"";
+    return`<span style="display:inline-flex;align-items:center;margin-right:5px;margin-bottom:5px"><button type="button" onclick="bkdToggleComb('${label}')" title="${info.colorName}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px 4px 8px;font-size:11px;border-radius:20px;background:${isActive?info.bg:"transparent"};color:${isActive?info.text:"#666"};border:${isActive?`1px solid ${info.bg}`:"1px solid var(--border)"};font-family:inherit;font-weight:500;cursor:pointer"><span style="width:9px;height:9px;border-radius:50%;background:${info.bg};border:1px solid rgba(0,0,0,0.15);flex-shrink:0"></span>${isActive?"✓ ":""}${label}</button>${areaBtns}</span>`;
+  }).join("");
 }
-function bkdToggleComb(c){
-  bkdActiveCombs=bkdActiveCombs.includes(c)?bkdActiveCombs.filter(x=>x!==c):[...bkdActiveCombs,c];
+function bkdToggleComb(label){
+  const idx=bkdActiveCombs.findIndex(x=>x.comb===label);
+  if(idx>=0)bkdActiveCombs.splice(idx,1);else bkdActiveCombs.push({comb:label,area:""});
+  renderBkdCombs();
+}
+function setBkdCombArea(label,area){
+  const entry=bkdActiveCombs.find(x=>x.comb===label);if(!entry)return;
+  entry.area=entry.area===area?"":area;
   renderBkdCombs();
 }
 function saveBkDetailsModal(){
