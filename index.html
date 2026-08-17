@@ -349,7 +349,7 @@ function normalizeCombs(arr){return(arr||[]).map(x=>typeof x==="string"?{comb:x,
 function combChipLabel(entry){return entry.area?`${entry.comb} [${entry.area}]`:entry.comb;}
 // Time spent is logged in 30-minute increments (up to 5 hours) so groomers can track how
 // long a booking actually took, separate from the estimated service duration.
-const TIME_SPENT_OPTIONS=[30,60,90,120,150,180,210,240,270,300];
+const TIME_SPENT_OPTIONS=[15,30,45,60,75,90,105,120,135,150,165,180,195,210,225,240,255,270,285,300];
 function fmtDuration(mins){
   if(!mins)return"";
   const h=Math.floor(mins/60),m=mins%60;
