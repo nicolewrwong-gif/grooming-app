@@ -128,6 +128,7 @@ tr:hover td{background:#fafbfc}
 <div id="modal-booking" class="modal-bg">
 <div class="modal" style="width:440px">
 <h2 id="bk-title">New booking</h2>
+<div id="bk-completion-banner" style="display:none;background:#EAF7EE;color:#2f7a4a;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px">✅ Booking marked as done — add any final details below (blades/combs, photos, products, payment, time spent) before saving.</div>
 <div class="mb10"><label class="lbl">Pet</label><select id="bk-pet"></select><div id="bk-pet-hint" style="font-size:11px;color:#888;margin-top:3px"></div></div>
 <div class="mb10"><label class="lbl">Owner</label><div id="bk-owner-display" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:#f6f6f6;color:#888;font-size:13px;min-height:34px">—</div><input type="hidden" id="bk-owner"/></div>
 <div class="mb10"><label class="lbl">Service</label><select id="bk-service"></select></div>
@@ -155,6 +156,7 @@ tr:hover td{background:#fafbfc}
   <div><label class="lbl">De-matting (min)</label><input type="number" id="bk-matting" value="0" min="0"/></div>
   <div><label class="lbl">Custom price ($)</label><input type="number" id="bk-custom" placeholder="Auto"/></div>
 </div>
+<div class="mb10"><label class="lbl">Time spent</label><select id="bk-timespent"></select></div>
 <div id="bk-price-box" class="price-box"></div>
 <div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-waived"> Waive payment</label></div>
 <div style="margin-bottom:10px"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-paid"> Mark as paid</label></div>
@@ -250,9 +252,14 @@ tr:hover td{background:#fafbfc}
 <div class="mb10"><label class="lbl" style="color:#E8534A;font-weight:600">⚠️ Special handling</label><div id="pt-special" class="multi-toggle"></div><input type="text" id="pt-special-custom" placeholder="e.g. owner must stay in waiting area" style="margin-top:6px"/></div>
 <div class="mb10"><label class="lbl">Behaviour traits</label><div id="pt-behaviour" class="multi-toggle"></div></div>
 <div class="mb10"><label class="lbl">Behaviour notes</label><textarea id="pt-behavnote" rows="2" placeholder="e.g. settles after first 10 mins"></textarea></div>
+<div class="mb10"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="pt-no-allergies" onchange="ptToggleNoAllergies()"/> No known allergies or medical conditions</label></div>
+<div id="pt-medconditions-section">
 <div class="mb10"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><label class="lbl" style="margin:0;white-space:nowrap">Medical conditions</label><div id="pt-medical" class="multi-toggle" style="display:inline-flex;flex-wrap:wrap;gap:4px"></div></div></div>
 <div class="mb10"><label class="lbl">Medical notes</label><textarea id="pt-mednotes" rows="2" placeholder="e.g. sensitive skin"></textarea></div>
+</div>
+<div id="pt-allergies-section">
 <div class="mb10"><label class="lbl" style="color:#92620A;font-weight:600">Allergies</label><div id="pt-allergies" class="multi-toggle"></div><input type="text" id="pt-allergies-custom" placeholder="e.g. specific brand of shampoo" style="margin-top:6px"/></div>
+</div>
 <div class="mb10"><label class="lbl">Preferred style</label><input type="text" id="pt-prefstyle" placeholder="e.g. teddy bear trim, summer cut..."/></div>
 <div class="mb10"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="pt-treats" checked/> OK to give treats</label></div>
 <div class="mb10"><div style="display:flex;align-items:center;justify-content:space-between"><label class="lbl" style="margin:0">Linked owners</label><button type="button" class="sm" onclick="openOwModalFromPet()">+ New owner</button></div><div id="pt-owners" class="multi-toggle" style="margin-top:4px"></div></div>
@@ -296,6 +303,7 @@ tr:hover td{background:#fafbfc}
   <label class="lbl">Extension combs used</label>
   <div id="bkd-combs" class="multi-toggle"></div>
 </div>
+<div class="mb10"><label class="lbl">Time spent</label><select id="bkd-timespent"></select></div>
 <div class="mb10"><label class="lbl">Booking notes</label><textarea id="bkd-notes" rows="2" placeholder="e.g. check ear infection"></textarea></div>
 <div class="mb10"><label class="lbl">For next time</label><textarea id="bkd-nextnote" rows="2" placeholder="e.g. trim nails shorter next visit"></textarea></div>
 <div class="row-end"><button onclick="closeBkDetailsModal()">Cancel</button><button class="primary" onclick="saveBkDetailsModal()">Save details</button></div>
@@ -334,11 +342,24 @@ function combInfo(label){return COMBS.find(c=>`${c.size} (${c.mm})`===label);}
 // Blades are stored as {blade, area} objects so a groomer can note "#4F on head" vs body;
 // normalizeBlades upgrades any older bookings that saved a plain string array.
 function normalizeBlades(arr){return(arr||[]).map(x=>typeof x==="string"?{blade:x,area:""}:{...x});}
-function bladeLabel(entry){return entry.area?`${entry.blade} (${entry.area})`:entry.blade;}
+function bladeLabel(entry){return entry.area?`${entry.blade} [${entry.area}]`:entry.blade;}
 // Combs are stored as {comb, area} objects, same pattern as blades, so a groomer can note
 // a comb used on head vs body; normalizeCombs upgrades any older bookings saved as plain strings.
 function normalizeCombs(arr){return(arr||[]).map(x=>typeof x==="string"?{comb:x,area:""}:{...x});}
-function combChipLabel(entry){return entry.area?`${entry.comb} (${entry.area})`:entry.comb;}
+function combChipLabel(entry){return entry.area?`${entry.comb} [${entry.area}]`:entry.comb;}
+// Time spent is logged in 30-minute increments (up to 5 hours) so groomers can track how
+// long a booking actually took, separate from the estimated service duration.
+const TIME_SPENT_OPTIONS=[30,60,90,120,150,180,210,240,270,300];
+function fmtDuration(mins){
+  if(!mins)return"";
+  const h=Math.floor(mins/60),m=mins%60;
+  if(h&&m)return`${h}h ${m}m`;
+  if(h)return`${h}h`;
+  return`${m} min`;
+}
+function timeSpentOptionsHtml(selected){
+  return`<option value="">Not logged</option>`+TIME_SPENT_OPTIONS.map(m=>`<option value="${m}"${Number(selected)===m?" selected":""}>${fmtDuration(m)}</option>`).join("");
+}
 const PRODUCT_KEYWORDS=["shampoo","conditioner","treatment","spray","rinse"];
 const PRODUCT_EXCLUDE=["spray bottle","shampoo bottles x 4"];
 function getProductsFromExpenses(){
@@ -884,7 +905,7 @@ document.addEventListener("click",function(e){
 function render(){renderMetrics();renderPage();}
 
 function renderMetrics(){
-  const td=todayStr();const now=new Date();const sw=new Date();sw.setDate(now.getDate()-now.getDay());const ew2=new Date(sw);ew2.setDate(sw.getDate()+6);
+  const td=todayStr();const now=new Date();const sw=new Date();sw.setDate(now.getDate()-((now.getDay()+6)%7));const ew2=new Date(sw);ew2.setDate(sw.getDate()+6);
   const m={today:bookings.filter(b=>b.date===td).length,week:bookings.filter(b=>{const d=new Date(b.date);return d>=sw&&d<=ew2;}).length,clients:owners.length,pending:bookings.filter(b=>b.status==="pending").length};
   const et=document.getElementById("m-today");const eww=document.getElementById("m-week");const ec=document.getElementById("m-clients");const ep=document.getElementById("m-pending");
   if(et)et.textContent=m.today;if(eww)eww.textContent=m.week;if(ec)ec.textContent=m.clients;if(ep)ep.textContent=m.pending;
@@ -928,14 +949,15 @@ function renderBookings(){
     const owner=ownerById(b.ownerId),pet=petById(b.petId),p=bkPrice(b);
     const priceHtml=b.waived?`<em style="color:#534AB7">Waived</em>`:b.discount&&p.disc>0?`<span style="text-decoration:line-through;color:#aaa;font-size:11px;margin-right:4px">${fmtMoney(p.subtotal)}</span><strong>${fmtMoney(p.finalTotal)}</strong>`:`<strong>${fmtMoney(p.finalTotal)}</strong>`;
     const payHtml=b.waived?tag("Waived","#EEEDFE","#534AB7"):b.paid?tag("Paid ✓","#EAF7EE","#5BAF7A"):b.status!=="done"?tag("Not due yet","#F0F0F0","#888"):`${tag("Outstanding","#FDECEA","#E8534A")}<div style="margin-top:4px;display:flex;gap:4px"><button class="sm" onclick="togglePaid(${b.id})">Mark paid</button><button class="sm" onclick="waiveBk(${b.id})">Waive</button></div>`;
+    const petPhoto=pet?.photo?`<img src="${pet.photo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:avatar(pet?.name||"?",36);
     return`<div class="card bk-card" data-id="${b.id}">
       <div style="display:flex;align-items:flex-start;gap:10px">
-        ${avatar(owner?.name||"?",36)}
+        ${petPhoto}
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div>
-              <div style="font-weight:500;font-size:13px">${owner?.name||"—"} <span style="color:#888;font-weight:400">&middot; ${owner?.phone||""}</span></div>
-              <div style="font-size:12px;color:#888;margin-top:1px"><strong style="color:var(--text)">${pet?.name||"—"}</strong> &middot; ${displayBreed(pet?.breed,pet?.oodleName)||""}</div>
+              <div style="font-weight:500;font-size:13px">${pet?.name||"—"} <span style="color:#888;font-weight:400">&middot; ${displayBreed(pet?.breed,pet?.oodleName)||""}</span></div>
+              <div style="font-size:12px;color:#888;margin-top:1px">${owner?.name||"—"} &middot; ${owner?.phone||""}</div>
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">${badge(b.status)}<button class="sm" onclick="openBkDetailsModal(${b.id})">📝 Details</button><button class="sm" onclick="editBk(${b.id})">&#9998;</button><button class="sm" onclick="deleteBk(${b.id})">&#128465;</button></div>
           </div>
@@ -957,6 +979,10 @@ function renderBookings(){
             <div style="min-width:110px">
               <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Payment</div>
               <div style="font-size:13px">${payHtml}</div>
+            </div>
+            <div style="min-width:80px">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Time spent</div>
+              <div style="font-size:13px">${b.timeSpent?fmtDuration(b.timeSpent):"—"}</div>
             </div>
           </div>
         </div>
@@ -983,7 +1009,7 @@ function filterBookings(){
 function renderCalendar(){
   const now=new Date();const y=now.getFullYear(),m=now.getMonth();
   const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const firstDay=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate();
+  const firstDay=(new Date(y,m,1).getDay()+6)%7,daysInMonth=new Date(y,m+1,0).getDate();
   const td=todayStr();let cells="";
   for(let i=0;i<firstDay;i++)cells+=`<div style="border-radius:8px;padding:5px 4px;min-height:52px;border:0.5px solid #eee;opacity:0.3"><div style="font-size:11px;color:#888">${new Date(y,m,-firstDay+i+1).getDate()}</div></div>`;
   for(let d=1;d<=daysInMonth;d++){
@@ -994,7 +1020,7 @@ function renderCalendar(){
     if(bks.length>2)bkHtml+=`<div style="font-size:10px;color:#888">+${bks.length-2}</div>`;
     cells+=`<div style="border-radius:8px;padding:5px 4px;min-height:52px;border:${isT?"1.5px solid #1a1a1a":"0.5px solid #eee"}"><div style="font-size:11px;color:#888;font-weight:${isT?500:400};margin-bottom:2px">${d}</div>${bkHtml}</div>`;
   }
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:14px;font-weight:500">${MONTHS[m]} ${y}</span></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div style="text-align:center;font-size:11px;color:#888;padding:4px 0">${d}</div>`).join("")}${cells}</div>`;
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:14px;font-weight:500">${MONTHS[m]} ${y}</span></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<div style="text-align:center;font-size:11px;color:#888;padding:4px 0">${d}</div>`).join("")}${cells}</div>`;
 }
 
 function renderPets(){
@@ -1088,6 +1114,7 @@ function renderFinances(){
 }
 
 let bkEditing=null,bkActiveAddons=[],bkActiveProducts=[],bkActiveBlades=[],bkActiveCombs=[],bkBeforePhoto=null,bkAfterPhoto=null;
+let _bkCompletionMode=false; // true when the modal is being opened right after marking a booking "done"
 let _pendingBeforeUpload=null,_pendingAfterUpload=null; // Promises that resolve to Drive URL or null
 let bkBeforePreCropUrl=null,bkAfterPreCropUrl=null; // Drive URLs superseded by a crop, pending deletion
 
@@ -1375,6 +1402,9 @@ function openBkModal(b){
   document.getElementById("bk-custom").value=b?.customPrice??"";
   document.getElementById("bk-waived").checked=b?.waived||false;
   document.getElementById("bk-paid").checked=b?.paid||false;
+  document.getElementById("bk-timespent").innerHTML=timeSpentOptionsHtml(b?.timeSpent);
+  document.getElementById("bk-completion-banner").style.display=_bkCompletionMode?"block":"none";
+  _bkCompletionMode=false;
   renderBkAddons(bkActiveAddons);
   renderBkProducts(bkActiveProducts);
   renderBkBlades(bkActiveBlades);
@@ -1538,6 +1568,7 @@ function closeBkModal(){
   deletePhotoFromDrive(bkAfterPreCropUrl);
   bkEditing=null;bkActiveAddons=[];bkActiveProducts=[];bkActiveBlades=[];bkActiveCombs=[];
   bkBeforePhoto=null;bkAfterPhoto=null;_pendingBeforeUpload=null;_pendingAfterUpload=null;bkBeforePreCropUrl=null;bkAfterPreCropUrl=null;
+  _bkCompletionMode=false;
 }
 async function saveBkModal(){
   const ownerId=Number(document.getElementById("bk-owner").value);
@@ -1553,7 +1584,7 @@ async function saveBkModal(){
     _pendingBeforeUpload=null;_pendingAfterUpload=null;
   }
   const customRaw=document.getElementById("bk-custom").value;
-  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],blades:[...bkActiveBlades],combs:[...bkActiveCombs],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
+  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],blades:[...bkActiveBlades],combs:[...bkActiveCombs],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,timeSpent:document.getElementById("bk-timespent").value?Number(document.getElementById("bk-timespent").value):null,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   if(bkEditing){bookings=bookings.map(b=>b.id===bkEditing.id?{...b,...obj}:b);}else{bookings.push({id:nextId++,...obj});}
   // Clean up any Drive URLs superseded by crops during this session
   deletePhotoFromDrive(bkBeforePreCropUrl);deletePhotoFromDrive(bkAfterPreCropUrl);
@@ -1571,6 +1602,7 @@ function openBkDetailsModal(id){
   bkdActiveCombs=normalizeCombs(b.combs);
   document.getElementById("bkd-notes").value=b.notes||"";
   document.getElementById("bkd-nextnote").value=b.nextnote||"";
+  document.getElementById("bkd-timespent").innerHTML=timeSpentOptionsHtml(b.timeSpent);
   renderBkdProducts();
   renderBkdBlades();
   renderBkdCombs();
@@ -1640,11 +1672,22 @@ function setBkdCombArea(label,area){
 }
 function saveBkDetailsModal(){
   if(!bkdEditing)return;
-  const obj={products:[...bkdActiveProducts],blades:[...bkdActiveBlades],combs:[...bkdActiveCombs],notes:document.getElementById("bkd-notes").value,nextnote:document.getElementById("bkd-nextnote").value};
+  const obj={products:[...bkdActiveProducts],blades:[...bkdActiveBlades],combs:[...bkdActiveCombs],notes:document.getElementById("bkd-notes").value,nextnote:document.getElementById("bkd-nextnote").value,timeSpent:document.getElementById("bkd-timespent").value?Number(document.getElementById("bkd-timespent").value):null};
   bookings=bookings.map(b=>b.id===bkdEditing.id?{...b,...obj}:b);
   save();closeBkDetailsModal();render();
 }
-function markBkStatus(id,status){bookings=bookings.map(b=>b.id===id?{...b,status}:b);save();render();}
+function markBkStatus(id,status){
+  if(status==="done"){
+    // Save the status change immediately so it's reflected everywhere, then reopen the
+    // full booking editor pre-filled so the groomer can log final details right away.
+    bookings=bookings.map(b=>b.id===id?{...b,status:"done"}:b);
+    save();render();
+    _bkCompletionMode=true;
+    openBkModal(bookings.find(b=>b.id===id));
+    return;
+  }
+  bookings=bookings.map(b=>b.id===id?{...b,status}:b);save();render();
+}
 function editBk(id){const b=bookings.find(x=>x.id===id);if(!b)return;openBkModal(b);}
 function deleteBk(id){openConfirm("Delete this booking?","Delete",()=>{bookings=bookings.filter(b=>b.id!==id);save();render();});}
 function togglePaid(id){bookings=bookings.map(b=>b.id===id?{...b,paid:!b.paid,waived:false}:b);save();render();}
@@ -1730,7 +1773,22 @@ function openPtModal(pet){
   }
   renderPtPhoto();
   renderPtToggles();
+  const hasNone=!(pet&&((pet.medicalTags||[]).length||pet.medicalNotes||(pet.allergies||[]).length||pet.customAllergies));
+  document.getElementById("pt-no-allergies").checked=hasNone;
+  document.getElementById("pt-medconditions-section").style.display=hasNone?"none":"";
+  document.getElementById("pt-allergies-section").style.display=hasNone?"none":"";
   document.getElementById("modal-pet").classList.add("open");
+}
+function ptToggleNoAllergies(){
+  const checked=document.getElementById("pt-no-allergies").checked;
+  document.getElementById("pt-medconditions-section").style.display=checked?"none":"";
+  document.getElementById("pt-allergies-section").style.display=checked?"none":"";
+  if(checked){
+    ptActiveMedical=[];ptActiveAllergies=[];
+    document.getElementById("pt-mednotes").value="";
+    document.getElementById("pt-allergies-custom").value="";
+    renderPtToggles();
+  }
 }
 function renderPtToggles(){
   renderToggle("pt-behaviour",BEHAVIOUR_TRAITS.filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)),ptActiveBehaviour.filter(t=>!SPECIAL_HANDLING_TRAITS.includes(t)),t=>{const c=behColor(t);return{bg:c.bg,text:c.text};},"ptBeh");
