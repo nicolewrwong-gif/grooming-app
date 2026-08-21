@@ -139,28 +139,29 @@ tr:hover td{background:#fafbfc}
 </div>
 <div class="mb10"><label class="lbl">Status</label><select id="bk-status"><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></div>
 <div class="mb10"><label class="lbl">Booking notes</label><textarea id="bk-notes" rows="2" placeholder="e.g. check ear infection"></textarea></div>
-<div class="mb10"><label class="lbl">For next time</label><textarea id="bk-nextnote" rows="2" placeholder="e.g. trim nails shorter next visit"></textarea></div>
-<div class="mb10">
+<div class="mb10 bk-postonly"><label class="lbl">Completion notes</label><textarea id="bk-completionnotes" rows="2" placeholder="e.g. notes added after the groom was done"></textarea></div>
+<div class="mb10 bk-postonly"><label class="lbl">For next time</label><textarea id="bk-nextnote" rows="2" placeholder="e.g. trim nails shorter next visit"></textarea></div>
+<div class="mb10 bk-postonly">
   <label class="lbl">Products used</label>
   <div id="bk-products" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:2px"></div>
 </div>
-<div class="mb10">
+<div class="mb10 bk-postonly">
   <label class="lbl">Blades used</label>
   <div id="bk-blades" class="multi-toggle"></div>
 </div>
-<div class="mb10">
+<div class="mb10 bk-postonly">
   <label class="lbl">Extension combs used</label>
   <div id="bk-combs" class="multi-toggle"></div>
 </div>
-<div class="grid2">
+<div class="grid2 bk-postonly">
   <div><label class="lbl">De-matting (min)</label><input type="number" id="bk-matting" value="0" min="0"/></div>
   <div><label class="lbl">Custom price ($)</label><input type="number" id="bk-custom" placeholder="Auto"/></div>
 </div>
-<div class="mb10"><label class="lbl">Time spent</label><select id="bk-timespent"></select></div>
+<div class="mb10 bk-postonly"><label class="lbl">Time spent</label><select id="bk-timespent"></select></div>
 <div id="bk-price-box" class="price-box"></div>
-<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-waived"> Waive payment</label></div>
-<div style="margin-bottom:10px"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-paid"> Mark as paid</label></div>
-<div class="mb10">
+<div style="margin-bottom:8px" class="bk-postonly"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-waived"> Waive payment</label></div>
+<div style="margin-bottom:10px" class="bk-postonly"><label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk-paid"> Mark as paid</label></div>
+<div class="mb10 bk-postonly">
   <label class="lbl">Before &amp; after photos</label>
   <div style="display:flex;gap:10px">
     <div style="flex:1">
@@ -304,7 +305,7 @@ tr:hover td{background:#fafbfc}
   <div id="bkd-combs" class="multi-toggle"></div>
 </div>
 <div class="mb10"><label class="lbl">Time spent</label><select id="bkd-timespent"></select></div>
-<div class="mb10"><label class="lbl">Booking notes</label><textarea id="bkd-notes" rows="2" placeholder="e.g. check ear infection"></textarea></div>
+<div class="mb10"><label class="lbl">Completion notes</label><textarea id="bkd-notes" rows="2" placeholder="e.g. notes added after the groom was done"></textarea></div>
 <div class="mb10"><label class="lbl">For next time</label><textarea id="bkd-nextnote" rows="2" placeholder="e.g. trim nails shorter next visit"></textarea></div>
 <div class="row-end"><button onclick="closeBkDetailsModal()">Cancel</button><button class="primary" onclick="saveBkDetailsModal()">Save details</button></div>
 </div>
@@ -988,7 +989,7 @@ function renderBookings(){
         </div>
       </div>
       ${(b.blades||[]).length||(b.combs||[]).length?`<div style="margin-left:46px;margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${normalizeBlades(b.blades).map(bl=>tag(bladeLabel(bl),"#E8F3FF","#185FA5")).join("")}${normalizeCombs(b.combs).map(c=>{const info=combInfo(c.comb);return info?tag(combChipLabel(c),info.bg,info.text):tag(combChipLabel(c),"#EAF7EE","#2f7a4a");}).join("")}</div>`:""}
-      ${b.notes||b.nextnote||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">Booking notes</strong><br>${b.notes}</div>`:""}${b.nextnote?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#92400E;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">For next time</strong><br>${b.nextnote}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
+      ${b.notes||b.completionNotes||b.nextnote||b.beforePhoto||b.afterPhoto?`<div style="margin-left:46px">${b.notes?`<div style="background:#EEEDFE;border-left:3px solid #534AB7;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#534AB7;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">Booking notes</strong><br>${b.notes}</div>`:""}${b.completionNotes?`<div style="background:#E6F1FB;border-left:3px solid #185FA5;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#185FA5;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">Completion notes</strong><br>${b.completionNotes}</div>`:""}${b.nextnote?`<div style="background:#FFF8E7;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px;color:#92400E;margin-top:8px;white-space:pre-wrap"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7">For next time</strong><br>${b.nextnote}</div>`:""}${(b.beforePhoto||b.afterPhoto)?`<div style="display:flex;gap:8px;margin-top:8px">${b.beforePhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">Before</div><img src="${b.beforePhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}${b.afterPhoto?`<div style="width:80px;flex-shrink:0"><div style="font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em">After</div><img src="${b.afterPhoto}" style="width:80px;height:100px;object-fit:cover;border-radius:7px;border:1px solid var(--border)"/></div>`:""}</div>`:""}</div>`:""}
     </div>`;
   }).join("");
   return`<div class="search-row"><span style="font-size:14px;font-weight:500">All bookings</span><div class="right"><input type="text" id="bk-search" placeholder="Search..." style="width:140px" oninput="filterBookings()"/><select id="bk-status-filter" onchange="filterBookings()" style="width:auto"><option value="">All statuses</option><option>confirmed</option><option>pending</option><option>done</option><option>cancelled</option></select></div></div><div id="bk-cards">${cards||`<p style="text-align:center;color:#888;padding:2rem">No bookings yet.</p>`}</div>`;
@@ -1397,6 +1398,7 @@ function openBkModal(b){
   document.getElementById("bk-time").value=b?.time||"09:00";
   document.getElementById("bk-status").value=b?.status??"confirmed";
   document.getElementById("bk-notes").value=b?.notes||"";
+  document.getElementById("bk-completionnotes").value=b?.completionNotes||"";
   document.getElementById("bk-nextnote").value=b?.nextnote||"";
   document.getElementById("bk-matting").value=b?.mattingMinutes||0;
   document.getElementById("bk-custom").value=b?.customPrice??"";
@@ -1405,6 +1407,11 @@ function openBkModal(b){
   document.getElementById("bk-timespent").innerHTML=timeSpentOptionsHtml(b?.timeSpent);
   document.getElementById("bk-completion-banner").style.display=_bkCompletionMode?"block":"none";
   _bkCompletionMode=false;
+  // New bookings only show the essentials (pet, owner, service, add-ons, date/time, status,
+  // booking notes, price estimate); the rest (products/blades/combs/matting/time spent/
+  // payment/photos/completion notes) only appears once a booking already exists.
+  const isCreate=!b;
+  document.querySelectorAll("#modal-booking .bk-postonly").forEach(el=>{el.style.display=isCreate?"none":"";});
   renderBkAddons(bkActiveAddons);
   renderBkProducts(bkActiveProducts);
   renderBkBlades(bkActiveBlades);
@@ -1584,7 +1591,7 @@ async function saveBkModal(){
     _pendingBeforeUpload=null;_pendingAfterUpload=null;
   }
   const customRaw=document.getElementById("bk-custom").value;
-  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],blades:[...bkActiveBlades],combs:[...bkActiveCombs],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,timeSpent:document.getElementById("bk-timespent").value?Number(document.getElementById("bk-timespent").value):null,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
+  const obj={ownerId,petId,service:document.getElementById("bk-service").value,addOns:[...bkActiveAddons],products:[...bkActiveProducts],blades:[...bkActiveBlades],combs:[...bkActiveCombs],date:document.getElementById("bk-date").value,time:document.getElementById("bk-time").value,status:document.getElementById("bk-status").value,notes:document.getElementById("bk-notes").value,completionNotes:document.getElementById("bk-completionnotes").value,nextnote:document.getElementById("bk-nextnote").value,mattingMinutes:Number(document.getElementById("bk-matting").value)||0,customPrice:customRaw!==""?Number(customRaw):null,discount:false,waived:document.getElementById("bk-waived").checked,paid:document.getElementById("bk-paid").checked,timeSpent:document.getElementById("bk-timespent").value?Number(document.getElementById("bk-timespent").value):null,beforePhoto:bkBeforePhoto,afterPhoto:bkAfterPhoto};
   if(bkEditing){bookings=bookings.map(b=>b.id===bkEditing.id?{...b,...obj}:b);}else{bookings.push({id:nextId++,...obj});}
   // Clean up any Drive URLs superseded by crops during this session
   deletePhotoFromDrive(bkBeforePreCropUrl);deletePhotoFromDrive(bkAfterPreCropUrl);
@@ -1600,7 +1607,7 @@ function openBkDetailsModal(id){
   bkdActiveProducts=[...(b.products||[])];
   bkdActiveBlades=normalizeBlades(b.blades);
   bkdActiveCombs=normalizeCombs(b.combs);
-  document.getElementById("bkd-notes").value=b.notes||"";
+  document.getElementById("bkd-notes").value=b.completionNotes||"";
   document.getElementById("bkd-nextnote").value=b.nextnote||"";
   document.getElementById("bkd-timespent").innerHTML=timeSpentOptionsHtml(b.timeSpent);
   renderBkdProducts();
@@ -1672,7 +1679,7 @@ function setBkdCombArea(label,area){
 }
 function saveBkDetailsModal(){
   if(!bkdEditing)return;
-  const obj={products:[...bkdActiveProducts],blades:[...bkdActiveBlades],combs:[...bkdActiveCombs],notes:document.getElementById("bkd-notes").value,nextnote:document.getElementById("bkd-nextnote").value,timeSpent:document.getElementById("bkd-timespent").value?Number(document.getElementById("bkd-timespent").value):null};
+  const obj={products:[...bkdActiveProducts],blades:[...bkdActiveBlades],combs:[...bkdActiveCombs],completionNotes:document.getElementById("bkd-notes").value,nextnote:document.getElementById("bkd-nextnote").value,timeSpent:document.getElementById("bkd-timespent").value?Number(document.getElementById("bkd-timespent").value):null};
   bookings=bookings.map(b=>b.id===bkdEditing.id?{...b,...obj}:b);
   save();closeBkDetailsModal();render();
 }
